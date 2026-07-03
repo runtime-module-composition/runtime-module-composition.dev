@@ -34,7 +34,9 @@ Runtime Module Composition has four core parts:
 3. The shell boots global providers and resolves the current route.
 4. The dynamic loader imports the slice module for that route.
 5. The browser resolves shared dependencies through the import map.
-6. The slice renders inside the host frame.
+6. The slice renders inside the host application's component tree.
+
+Runtime Module Composition does not use iframes. Slices are native JavaScript modules imported into the same browser page and rendered by the host application.
 
 ## Why It Works
 

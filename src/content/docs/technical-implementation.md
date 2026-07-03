@@ -89,7 +89,7 @@ The slice does not need to bundle these runtime dependencies. The browser resolv
 
 ## Host Shell Responsibilities
 
-The host shell should stay thin but decisive. It owns the application frame and the runtime composition boundary.
+The host shell should stay thin but decisive. It owns the application shell and the runtime composition boundary.
 
 Host responsibilities:
 
@@ -103,6 +103,8 @@ Host responsibilities:
 - render loading and error boundaries around remote modules.
 
 The host should not own feature-specific UI or business workflows. Those belong in slices.
+
+Runtime Module Composition does not use iframes. Slices are native JavaScript modules imported into the same browser page and rendered inside the host application's component tree.
 
 ## Route-to-Module Resolution
 
@@ -323,6 +325,6 @@ Before changing a shared dependency:
 
 ## Why This Strategy Works
 
-Runtime Module Composition keeps the browser as the composition runtime. The host shell provides the stable product frame. The import map provides the dependency and module resolution contract. Slices remain independently owned and deployed, but they render as one coherent application because they share the same runtime graph.
+Runtime Module Composition keeps the browser as the composition runtime. The host shell provides the stable product structure. The import map provides the dependency and module resolution contract. Slices remain independently owned and deployed, but they render as one coherent application because they share the same runtime graph.
 
 The strategy is deliberately small: standard ESM, standard import maps, static assets, and dynamic imports. That makes it understandable, portable, and operationally friendly.
