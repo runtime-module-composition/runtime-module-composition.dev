@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Runtime Module Composition</title>
+    <meta
+      name="description"
+      content="A technical implementation guide for composing independently deployed frontend modules at runtime with native ESM and import maps."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="nav" aria-label="Page sections">
+        <a href="#architecture">Architecture</a>
+        <a href="#implementation">Implementation</a>
+        <a href="#operations">Operations</a>
+      </nav>
+      <div class="hero__content">
+        <p class="eyebrow">Microfrontend Architecture</p>
+        <h1>Runtime Module Composition</h1>
+        <p class="lede">
+          A browser-native strategy for composing independently deployed
+          frontend slices with ESM, import maps, and dynamic module loading.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <section class="band intro" aria-labelledby="overview-title">
+        <div class="container">
+          <h2 id="overview-title">Overview</h2>
+          <p>
+            Runtime Module Composition turns the browser into the composition
+            runtime. A host shell loads a shared import map, resolves the active
+            route to a module specifier, and dynamically imports the frontend
+            slice responsible for that part of the product.
+          </p>
+          <p>
+            Ferry RSVP uses this pattern to keep feature slices independently
+            built and deployed while preserving one coherent user experience.
+          </p>
+        </div>
+      </section>
+
+      <section class="band" id="architecture" aria-labelledby="architecture-title">
+        <div class="container">
+          <h2 id="architecture-title">Architecture</h2>
+          <div class="diagram" role="img" aria-label="Runtime composition flow">
+            <div>Browser</div>
+            <span></span>
+            <div>Host Shell</div>
+            <span></span>
+            <div>Import Map</div>
+            <span></span>
+            <div>Dynamic Loader</div>
+            <span></span>
+            <div>Feature Slice</div>
+          </div>
+          <div class="grid">
+            <article>
+              <h3>Host Shell</h3>
+              <p>
+                Owns the document, root providers, locale-aware routing,
+                navigation, persistent layout, loading states, and error
+                boundaries.
+              </p>
+            </article>
+            <article>
+              <h3>Import Map</h3>
+              <p>
+                Centralizes framework versions, internal module prefixes, shared
+                utilities, UI packages, and static asset origins.
+              </p>
+            </article>
+            <article>
+              <h3>Feature Slices</h3>
+              <p>
+                Build as ESM, publish stable module entry points, externalize
+                shared runtime dependencies, and own product-specific UI.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="implementation" aria-labelledby="implementation-title">
+        <div class="container">
+          <h2 id="implementation-title">Implementation Model</h2>
+          <ol class="steps">
+            <li>The browser requests the host HTML.</li>
+            <li>The host loads the import map before application modules run.</li>
+            <li>The shell boots global providers and resolves the current route.</li>
+            <li>The dynamic loader imports the slice module for that route.</li>
+            <li>The browser resolves shared dependencies through the import map.</li>
+            <li>The slice renders inside the host frame.</li>
+          </ol>
+
+          <pre><code>{
+  "imports": {
+    "@esm.sh/react": "https://esm.sh/react@19.2.4",
+    "@ferryrsvp/web-runtime": "https://assets.ferry.rsvp/web-runtime/index.mjs",
+    "@ferryrsvp/booking/": "https://assets.ferry.rsvp/web-booking/"
+  }
+}</code></pre>
+        </div>
+      </section>
+
+      <section class="band" id="operations" aria-labelledby="operations-title">
+        <div class="container">
+          <h2 id="operations-title">Operational Rules</h2>
+          <ul class="rules">
+            <li>Runtime dependencies belong in the import map.</li>
+            <li>Slices build and publish ESM outputs.</li>
+            <li>The route resolver is part of the runtime contract.</li>
+            <li>Shared dependency upgrades require cross-slice smoke testing.</li>
+            <li>Rollback should be possible by restoring a previous import map.</li>
+          </ul>
+          <p class="doc-link">
+            Read the full implementation source:
+            <a href="./docs/technical-implementation.md">technical implementation document</a>.
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+
