@@ -5,7 +5,7 @@ description: How Runtime Module Composition works in production with a host shel
 
 Runtime Module Composition is a browser-native micro frontend strategy for composing independently built and deployed JavaScript modules at runtime. Instead of producing one application bundle, a host shell loads a shared import map, resolves route ownership, and dynamically imports the frontend module responsible for the current user journey.
 
-This document describes the technical implementation pattern used by Ferry RSVP and generalizes it into a reusable architecture.
+This document describes a reusable technical implementation pattern for import-map-based microfrontends.
 
 ## Goals
 
@@ -70,9 +70,9 @@ Example shape:
   "imports": {
     "@esm.sh/react": "https://esm.sh/react@19.2.4",
     "@esm.sh/react-dom/client": "https://esm.sh/react-dom@19.2.4/client",
-    "@ferryrsvp/web-runtime": "https://assets.ferry.rsvp/web-runtime/index.mjs",
-    "@ferryrsvp/web-ui": "https://assets.ferry.rsvp/web-ui/index.mjs",
-    "@ferryrsvp/booking/": "https://assets.ferry.rsvp/web-booking/"
+    "@acme/runtime": "https://assets.example.com/runtime/index.mjs",
+    "@acme/ui": "https://assets.example.com/ui/index.mjs",
+    "@acme/booking/": "https://assets.example.com/booking/"
   }
 }
 ```
@@ -82,7 +82,7 @@ This allows a slice to import shared dependencies with stable bare specifiers:
 ```js
 import React from "@esm.sh/react";
 import { createRoot } from "@esm.sh/react-dom/client";
-import { useTranslate } from "@ferryrsvp/web-runtime";
+import { useTranslate } from "@acme/runtime";
 ```
 
 The slice does not need to bundle these runtime dependencies. The browser resolves them from the shared import map.
@@ -112,10 +112,10 @@ One practical pattern is namespace-based routing:
 
 | Route prefix | Module specifier |
 | --- | --- |
-| `/page/...` | `@ferryrsvp/web-page/index.mjs` |
-| `/search/...` | `@ferryrsvp/web-search/index.mjs` |
-| `/booking/...` | `@ferryrsvp/web-booking/index.mjs` |
-| `/tickets/...` | `@ferryrsvp/web-tickets/index.mjs` |
+| `/page/...` | `@acme/page/index.mjs` |
+| `/search/...` | `@acme/search/index.mjs` |
+| `/booking/...` | `@acme/booking/index.mjs` |
+| `/tickets/...` | `@acme/tickets/index.mjs` |
 
 The route resolver should be small, predictable, and tested. It is part of the runtime contract.
 
@@ -129,7 +129,7 @@ export const getImportPath = ({ path, source }) => {
     return "../src/index";
   }
 
-  return `@ferryrsvp/web-${namespace}/index.mjs`;
+  return `@acme/${namespace}/index.mjs`;
 };
 ```
 
@@ -218,12 +218,12 @@ The externalization rule is what keeps shared dependencies out of the slice bund
 export const isExternal = (moduleName) => {
   return [
     /^@esm\.sh/,
-    /^@ferryrsvp/
+    /^@acme/
   ].some((pattern) => pattern.test(moduleName));
 };
 ```
 
-In Ferry RSVP, this behavior is centralized in shared tooling so slices do not invent their own dependency policy.
+In mature implementations, this behavior should be centralized in shared tooling so slices do not invent their own dependency policy.
 
 ## Dependency Policy
 
