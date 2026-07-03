@@ -10,6 +10,17 @@ This project is intentionally static. GitHub Pages deploys the repository root d
 - `styles.css` contains the page styling.
 - `docs/technical-implementation.md` is the editable source document.
 
+## Cloudflare Pages
+
+This project is also hosted on Cloudflare Workers & Pages through the linked GitHub repository. New merges into `main` redeploy the static site automatically.
+
+Recommended Cloudflare Pages settings:
+
+- Framework preset: `None`
+- Build command: leave empty
+- Build output directory: `.`
+- Root directory: repository root
+
 ## Local Preview
 
 Open `index.html` in a browser, or serve the folder with any static file server.
