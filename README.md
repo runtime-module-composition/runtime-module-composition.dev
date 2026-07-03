@@ -4,7 +4,7 @@ Technical documentation for an import-map-based micro frontend strategy that com
 
 ## GitHub Pages
 
-This project is intentionally static. It can be published directly with GitHub Pages by serving the repository root:
+This project is intentionally static. GitHub Pages deploys the repository root directly through `.github/workflows/pages.yml`; there is no Jekyll, Docker image, package install, or build command.
 
 - `index.html` is the public landing page.
 - `styles.css` contains the page styling.
@@ -13,4 +13,3 @@ This project is intentionally static. It can be published directly with GitHub P
 ## Local Preview
 
 Open `index.html` in a browser, or serve the folder with any static file server.
-
