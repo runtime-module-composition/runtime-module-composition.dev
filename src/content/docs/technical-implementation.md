@@ -1,4 +1,7 @@
-# Runtime Module Composition
+---
+title: Technical Implementation
+description: How Runtime Module Composition works in production with a host shell, import maps, route resolution, and dynamic ESM loading.
+---
 
 Runtime Module Composition is a browser-native micro frontend strategy for composing independently built and deployed JavaScript modules at runtime. Instead of producing one application bundle, a host shell loads a shared import map, resolves route ownership, and dynamically imports the frontend module responsible for the current user journey.
 
@@ -323,4 +326,3 @@ Before changing a shared dependency:
 Runtime Module Composition keeps the browser as the composition runtime. The host shell provides the stable product frame. The import map provides the dependency and module resolution contract. Slices remain independently owned and deployed, but they render as one coherent application because they share the same runtime graph.
 
 The strategy is deliberately small: standard ESM, standard import maps, static assets, and dynamic imports. That makes it understandable, portable, and operationally friendly.
-

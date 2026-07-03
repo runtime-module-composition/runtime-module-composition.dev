@@ -1,0 +1,41 @@
+---
+title: Runtime Module Composition
+description: A browser-native strategy for composing independently deployed frontend modules with ESM, import maps, and dynamic loading.
+template: splash
+hero:
+  title: Runtime Module Composition
+  tagline: A browser-native microfrontend strategy for composing independently deployed frontend slices with ESM, import maps, and dynamic module loading.
+  actions:
+    - text: Read the implementation guide
+      link: /technical-implementation/
+      variant: primary
+    - text: View source
+      link: https://github.com/runtime-module-composition/runtime-module-composition.dev
+      variant: secondary
+---
+
+Runtime Module Composition turns the browser into the composition runtime. A host shell loads a shared import map, resolves the active route to a module specifier, and dynamically imports the frontend slice responsible for that part of the product.
+
+Ferry RSVP uses this pattern to keep feature slices independently built and deployed while preserving one coherent user experience.
+
+## Architecture Model
+
+Runtime Module Composition has four core parts:
+
+- **Host shell**: owns the document, root providers, global navigation, layout, route resolver, loading states, and error boundaries.
+- **Import map**: centralizes shared dependency versions, internal module prefixes, UI packages, and static asset origins.
+- **Feature slices**: build as ESM, publish stable module entry points, and own product-specific UI.
+- **Dynamic loader**: imports the resolved module specifier at runtime and renders it inside the shell.
+
+## Implementation Flow
+
+1. The browser requests the host HTML.
+2. The host loads the import map before application modules run.
+3. The shell boots global providers and resolves the current route.
+4. The dynamic loader imports the slice module for that route.
+5. The browser resolves shared dependencies through the import map.
+6. The slice renders inside the host frame.
+
+## Why It Works
+
+The strategy is deliberately small: standard ESM, standard import maps, static assets, and dynamic imports. That makes it understandable, portable, and operationally friendly.
