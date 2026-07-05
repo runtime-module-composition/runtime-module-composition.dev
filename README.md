@@ -1,4 +1,4 @@
-# Runtime Module Composition
+![Runtime Module Composition — a browser-native microfrontend strategy for composing independently deployed frontend slices with ESM, import maps, and dynamic module loading](./src/assets/logo-wordmark.svg)
 
 Documentation site for an import-map-based microfrontend strategy that composes independently deployed ESM modules in the browser at runtime.
 

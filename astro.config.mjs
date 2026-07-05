@@ -8,6 +8,11 @@ export default defineConfig({
       title: "Runtime Module Composition",
       description:
         "A browser-native microfrontend architecture for composing independently deployed ESM modules at runtime.",
+      logo: {
+        src: "./src/assets/logo.png",
+        replacesTitle: true,
+      },
+      favicon: "/favicon.png",
       social: [
         {
           icon: "github",
