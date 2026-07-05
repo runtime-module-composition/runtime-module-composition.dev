@@ -17,7 +17,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/runtime-module-composition/runtime-module-composition.dev",
+          href: "https://github.com/runtime-module-composition/rmc-toolkit",
         },
       ],
       sidebar: [
@@ -40,6 +40,9 @@ export default defineConfig({
         },
       ],
       customCss: ["./src/styles/custom.css"],
+      components: {
+        Footer: "./src/components/Footer.astro",
+      },
     }),
   ],
 });

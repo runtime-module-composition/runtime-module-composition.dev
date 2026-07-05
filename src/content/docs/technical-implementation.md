@@ -5,7 +5,7 @@ description: How Runtime Module Composition works in production with a host shel
 
 Runtime Module Composition is a browser-native micro frontend strategy for composing independently built and deployed JavaScript modules at runtime. Instead of producing one application bundle, a host shell loads a shared import map, resolves route ownership, and dynamically imports the frontend module responsible for the current user journey.
 
-This document describes the reusable technical implementation pattern itself, independent of any specific tooling. If you want a ready-made implementation instead of hand-rolling one, [`runtime-module-composition`](/getting-started/) implements everything below as `defineManifest()`, `createImportMap()`, `resolveRoute()`, and framework adapters — see [Getting Started](/getting-started/) and the [API Reference](/api-reference/).
+This document describes the reusable technical implementation pattern itself, independent of any specific tooling. If you want a ready-made implementation instead of hand-rolling one, [`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) implements everything below as `defineManifest()`, `createImportMap()`, `createRuntimeHost()`, and framework adapters — see [Getting Started](/getting-started/) and the [API Reference](/api-reference/).
 
 ## Goals
 
@@ -183,6 +183,8 @@ const DynamicModuleLoader = ({ modulePath }) => {
 
 The `@vite-ignore` comment is important when using Vite because the module specifier is intentionally resolved by the browser import map at runtime.
 
+A hand-rolled loader like this one has a sharp edge that's easy to miss: if a user navigates twice in quick succession, nothing guarantees the two `import()` calls resolve in the order they were requested. If the first (stale) one resolves *after* the second, it can silently overwrite the correct module — and since the overwritten module's cleanup never runs, anything it registered (listeners, timers, subscriptions) leaks. Guard against this with a sequence token: capture a per-call counter before each import, and discard the result if a newer call has started by the time it resolves. A ready-made loader that already does this is a reasonable thing to reach for instead of re-deriving it per host — [`createRuntimeHost()`](/api-reference/#createruntimehostoptions) is one example.
+
 ## Slice Responsibilities
 
 A slice is an independently owned frontend module. It should expose a stable entry point and assume the host provides global composition context.
@@ -237,7 +239,7 @@ export const isExternal = (moduleName) => {
 };
 ```
 
-In mature implementations, this behavior should be centralized in shared tooling so slices do not invent their own dependency policy.
+In mature implementations, this behavior should be centralized in shared tooling so slices do not invent their own dependency policy — a mode-aware config helper (dev-server port, the library-build `process.env.NODE_ENV` fix, entry auto-detection) paired with a manifest-driven externalization predicate, rather than every slice hand-copying `vite.config.ts`. [`defineSliceBuild()`](/api-reference/#defineslicebuildoptions) plus [`createRollupExternal()`](/api-reference/#createrollupexternalmanifest) is one example of that pairing.
 
 ## Dependency Policy
 
@@ -319,6 +321,7 @@ Common failure modes and mitigations:
 | Remote module fails to load | Missing asset, bad import-map URL, CDN issue | Error boundary, asset health checks, rollback import map |
 | Duplicate React instance | Slice bundled React instead of externalizing it | Shared externalization helper and build checks |
 | Route loads wrong slice | Resolver rule drift | Unit tests for route-to-module mapping |
+| Rapid navigation mounts the wrong (stale) module and leaks the discarded one's cleanup | Two `import()` calls race and resolve out of request order | Discard stale in-flight imports via a per-call sequence token instead of trusting resolution order |
 | Local dev differs from production | Dev server rewrites bare imports | Import-map-aware Vite plugin and externalization |
 | Breaking shared dependency upgrade | Import map changed without slice compatibility checks | Cross-slice smoke tests before release |
 

@@ -1,0 +1,23 @@
+---
+import Default from "@astrojs/starlight/components/Footer.astro";
+---
+
+<Default><slot /></Default>
+<p class="site-credit">
+  Written by <a href="https://www.linkedin.com/in/angelovagenas/" target="_blank" rel="noopener noreferrer me">Angelo Vagenas</a>
+</p>
+
+<style>
+  .site-credit {
+    margin: 0 auto 1rem;
+    text-align: center;
+    font-size: var(--sl-text-xs);
+    color: var(--sl-color-gray-3);
+  }
+  .site-credit a {
+    color: var(--sl-color-gray-2);
+  }
+  .site-credit a:hover {
+    color: var(--sl-color-white);
+  }
+</style>
