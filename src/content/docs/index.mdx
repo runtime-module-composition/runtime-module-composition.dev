@@ -6,9 +6,12 @@ hero:
   title: Runtime Module Composition
   tagline: A browser-native microfrontend strategy for composing independently deployed frontend slices with ESM, import maps, and dynamic module loading.
   actions:
-    - text: Read the implementation guide
-      link: /technical-implementation/
+    - text: Get started
+      link: /getting-started/
       variant: primary
+    - text: Read the architecture
+      link: /technical-implementation/
+      variant: secondary
     - text: View source
       link: https://github.com/runtime-module-composition/runtime-module-composition.dev
       variant: secondary
@@ -17,6 +20,8 @@ hero:
 Runtime Module Composition turns the browser into the composition runtime. A host shell loads a shared import map, resolves the active route to a module specifier, and dynamically imports the frontend slice responsible for that part of the product.
 
 Teams can use this pattern to keep feature slices independently built and deployed while preserving one coherent user experience.
+
+[`runtime-module-composition`](/getting-started/) is a small toolkit that implements this pattern directly: a manifest-driven core plus Vite and React adapters for generating import maps, resolving routes, and loading slices. You can adopt it as-is, or use it as a reference while building the pattern into your own stack — see the [Technical Implementation](/technical-implementation/) guide for the architecture independent of any specific tooling.
 
 ## Architecture Model
 

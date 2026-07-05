@@ -5,7 +5,7 @@ description: How Runtime Module Composition works in production with a host shel
 
 Runtime Module Composition is a browser-native micro frontend strategy for composing independently built and deployed JavaScript modules at runtime. Instead of producing one application bundle, a host shell loads a shared import map, resolves route ownership, and dynamically imports the frontend module responsible for the current user journey.
 
-This document describes a reusable technical implementation pattern for import-map-based microfrontends.
+This document describes the reusable technical implementation pattern itself, independent of any specific tooling. If you want a ready-made implementation instead of hand-rolling one, [`runtime-module-composition`](/getting-started/) implements everything below as `defineManifest()`, `createImportMap()`, `resolveRoute()`, and framework adapters — see [Getting Started](/getting-started/) and the [API Reference](/api-reference/).
 
 ## Goals
 
@@ -87,6 +87,16 @@ import { useTranslate } from "@acme/runtime";
 
 The slice does not need to bundle these runtime dependencies. The browser resolves them from the shared import map.
 
+### Escape Hatches
+
+Namespace and route conventions should cover most slices without any per-slice configuration. Some dependencies and routes won't fit the convention — a shared library outside the CDN convention, a route that needs to point at a nonstandard specifier, a slice whose asset path doesn't match its route. Rather than special-casing the resolver or build config, keep these as small, explicit entries alongside the manifest:
+
+- an exact-specifier override for a dependency that needs a specific URL instead of the namespace or external-dependency convention;
+- an explicit slice definition (route, module specifier, entry path) for a slice that doesn't fit convention-based routing;
+- an explicit route-to-specifier override for a route that should win over convention-based resolution.
+
+Treat these as escape hatches, not the primary mechanism. If the list of overrides grows to rival the number of conventionally-resolved slices, that's a signal the convention itself needs to change instead.
+
 ## Host Shell Responsibilities
 
 The host shell should stay thin but decisive. It owns the application shell and the runtime composition boundary.
@@ -136,6 +146,8 @@ export const getImportPath = ({ path, source }) => {
 ```
 
 Production and local development can use the same resolver while returning different module specifiers.
+
+Convention-based resolution should stay the default path. Reserve explicit route-to-specifier overrides for the routes that genuinely don't fit the namespace convention, and keep overrides small enough to audit at a glance — a resolver with more exceptions than conventions has stopped being a convention.
 
 ## Dynamic Module Loading
 
@@ -277,6 +289,14 @@ Recommended deployment flow:
 
 For low-risk updates, a slice can often deploy independently if its public entry point remains stable.
 
+### Standalone Import Map Delivery
+
+Injecting the import map through the build's HTML transform works well when the host and the import map are built together. Some setups need the import map served as its own asset instead — a dev server proxying to a shared manifest, a host that isn't built with the same tool that generates the map, or a team that wants one import-map endpoint several local dev servers can point at.
+
+In that shape, the import map is generated as a small bootstrap script (rather than inlined HTML) and served from its own path, such as `/js/importmap.js`. The script detects a dev-mode flag from its own `<script src>` at request time and appends it to relevant URLs, so the same served script can answer both a plain request and a dev-flagged one without the caller needing two separate assets. A local dev server can further override a single slice's origin in the served script — useful when one engineer is actively developing one slice locally against an otherwise-shared, deployed manifest.
+
+The script must still land in `<head>` before any dependent module script runs, same as the inline-HTML approach — only the delivery mechanism changes, not the ordering constraint.
+
 ## Versioning Strategy
 
 The import map is the coordination point for versions.
@@ -313,7 +333,8 @@ Before adding a new slice:
 - add a local development entry point;
 - add route resolver tests;
 - verify host loading, loading state, and error state;
-- document ownership and deployment path.
+- document ownership and deployment path;
+- run manifest validation (checking origin URLs, namespace formatting, and override/entry shape) in CI so drift is caught before it ships.
 
 Before changing a shared dependency:
 

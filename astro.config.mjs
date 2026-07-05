@@ -26,6 +26,13 @@ export default defineConfig({
             },
           ],
         },
+        {
+          label: "Library",
+          items: [
+            { label: "Getting Started", slug: "getting-started" },
+            { label: "API Reference", slug: "api-reference" },
+          ],
+        },
       ],
       customCss: ["./src/styles/custom.css"],
     }),
