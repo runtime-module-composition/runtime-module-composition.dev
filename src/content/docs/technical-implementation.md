@@ -185,6 +185,8 @@ The `@vite-ignore` comment is important when using Vite because the module speci
 
 A hand-rolled loader like this one has a sharp edge that's easy to miss: if a user navigates twice in quick succession, nothing guarantees the two `import()` calls resolve in the order they were requested. If the first (stale) one resolves *after* the second, it can silently overwrite the correct module — and since the overwritten module's cleanup never runs, anything it registered (listeners, timers, subscriptions) leaks. Guard against this with a sequence token: capture a per-call counter before each import, and discard the result if a newer call has started by the time it resolves. A ready-made loader that already does this is a reasonable thing to reach for instead of re-deriving it per host — [`createRuntimeHost()`](/api-reference/#createruntimehostoptions) is one example.
 
+A second, unrelated sharp edge shows up specifically in a framework-aware loading helper (a hook, a composable, a boundary component) shipped as its own package rather than written inline in the host: if that helper package imports its framework directly (`import React from "react"`, `import * as Vue from "vue"`), it depends on the helper's own module resolution landing on the exact same framework instance the host app is already using. A different bundler, a different CDN-externalization convention, or the helper package itself being loaded from a CDN can all resolve that import to a second, separate copy of the framework — which silently breaks hooks, Context, or reactivity across the boundary between the two copies, since they're not really the same runtime. The structural fix is dependency injection rather than any import convention: have the helper export a factory that takes the framework instance as a parameter, and close every hook/composable it returns over that exact instance, so there's no import path left for the helper to get wrong. [`createReactAdapter()`](/api-reference/#createreactadapterreact) and [`createVueAdapter()`](/api-reference/#createvueadaptervue) are built this way.
+
 ## Slice Responsibilities
 
 A slice is an independently owned frontend module. It should expose a stable entry point and assume the host provides global composition context.
@@ -319,7 +321,7 @@ Common failure modes and mitigations:
 | Failure | Cause | Mitigation |
 | --- | --- | --- |
 | Remote module fails to load | Missing asset, bad import-map URL, CDN issue | Error boundary, asset health checks, rollback import map |
-| Duplicate React instance | Slice bundled React instead of externalizing it | Shared externalization helper and build checks |
+| Duplicate framework instance (hooks/Context/reactivity break) | Slice bundled the framework instead of externalizing it, *or* a published loading-helper package (hook/composable/boundary) imported the framework itself instead of receiving it from the host | Shared externalization helper and build checks for slices; dependency injection (factory takes the framework instance as a parameter) for published helper packages |
 | Route loads wrong slice | Resolver rule drift | Unit tests for route-to-module mapping |
 | Rapid navigation mounts the wrong (stale) module and leaks the discarded one's cleanup | Two `import()` calls race and resolve out of request order | Discard stale in-flight imports via a per-call sequence token instead of trusting resolution order |
 | Local dev differs from production | Dev server rewrites bare imports | Import-map-aware Vite plugin and externalization |

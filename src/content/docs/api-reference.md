@@ -3,15 +3,16 @@ title: API Reference
 description: Every exported method in rmc-toolkit, with usage examples and implementation notes.
 ---
 
-[`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) is split into a framework-agnostic core plus adapters, published as three independent packages. This reference covers every public export. New to the library? Start with [Getting Started](/getting-started/).
+[`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) is split into a framework-agnostic core plus adapters, published as four independent packages. This reference covers every public export. New to the library? Start with [Getting Started](/getting-started/).
 
 ```ts
 import { createExternalMatcher, createImportMap /* ... */ } from "@rmc-toolkit/core";
 import { runtimeComposition /* ... */ } from "@rmc-toolkit/vite";
-import { DynamicModuleBoundary } from "@rmc-toolkit/react";
+import { createReactAdapter, createDynamicModuleBoundary } from "@rmc-toolkit/react";
+import { createVueAdapter } from "@rmc-toolkit/vue";
 ```
 
-There is no root/meta package — install `@rmc-toolkit/core`, `@rmc-toolkit/vite`, and `@rmc-toolkit/react` directly, and only the ones you need. `@rmc-toolkit/vite` and `@rmc-toolkit/react` both depend on `@rmc-toolkit/core`.
+There is no root/meta package — install `@rmc-toolkit/core`, `@rmc-toolkit/vite`, `@rmc-toolkit/react`, and `@rmc-toolkit/vue` directly, and only the ones you need. `@rmc-toolkit/vite`, `@rmc-toolkit/react`, and `@rmc-toolkit/vue` all depend on `@rmc-toolkit/core`; neither `@rmc-toolkit/react` nor `@rmc-toolkit/vue` has a runtime dependency on React or Vue themselves (see [`createReactAdapter`](#createreactadapterreact) for why).
 
 ## Manifest fields
 
@@ -112,6 +113,7 @@ export type RuntimeHostOptions = {
   manifest: RuntimeCompositionManifest;
   target: Element;
   onLoading?: (path: string) => void;
+  onReady?: (path: string) => void;
   onError?: (error: unknown, path: string) => void;
   importer?: DynamicImporter;
 };
@@ -123,6 +125,8 @@ export type RuntimeHost = {
 
 export const createRuntimeHost: (options: RuntimeHostOptions) => RuntimeHost;
 ```
+
+`onReady(path)` fires exactly when a non-stale `resolveAndMount()` call finishes mounting successfully — never for a call that was discarded because a newer navigation started first. It's the signal that a `"loading"` state should end; there's no separate "loading finished" callback because the loading UI is naturally replaced once either `mount()` or `onError` writes into `target`.
 
 **Plain host, no framework router:**
 
@@ -137,75 +141,68 @@ window.addEventListener("popstate", () => {
 void host.resolveAndMount(window.location.pathname); // initial load
 ```
 
-**React host, using React Router:** React Router owns link interception, `pushState`, and `popstate`; `createRuntimeHost` only reacts to the resulting path via `useLocation()`. `target` can be an element the host was already rendering as part of its layout — it doesn't need to be a dedicated wrapper, but nothing else may render children into it once handed over.
-
-```tsx
-function App() {
-  const location = useLocation();
-  const mainRef = useRef<HTMLElement>(null);
-  const hostRef = useRef<ReturnType<typeof createRuntimeHost> | null>(null);
-
-  useEffect(() => {
-    if (!mainRef.current) return;
-    hostRef.current = createRuntimeHost({
-      manifest,
-      target: mainRef.current,
-      onLoading: (path) => setStatus("loading"),
-      onError: (error, path) => setStatus("error"),
-    });
-    return () => void hostRef.current?.destroy();
-  }, []);
-
-  useEffect(() => {
-    void hostRef.current?.resolveAndMount(location.pathname);
-  }, [location.pathname]);
-
-  return (
-    <div className="app-shell">
-      <SiteHeader />
-      <main ref={mainRef} />
-      <SiteFooter />
-    </div>
-  );
-}
-```
-
-**Vue host, using Vue Router:** the same shape — forward Vue Router's reactive `route.fullPath` to `resolveAndMount()` via `watch()`.
-
-```ts
-export default {
-  setup() {
-    const target = ref<HTMLElement | null>(null);
-    const route = useRoute();
-    let host: ReturnType<typeof createRuntimeHost> | null = null;
-
-    onMounted(() => {
-      host = createRuntimeHost({
-        manifest,
-        target: target.value!,
-        onLoading: (path) => { /* set a reactive loading flag */ },
-        onError: (error, path) => { /* set a reactive error flag */ },
-      });
-      void host.resolveAndMount(route.fullPath);
-    });
-
-    watch(() => route.fullPath, (newPath) => void host?.resolveAndMount(newPath));
-    onUnmounted(() => void host?.destroy());
-
-    return { target };
-  },
-  template: `<div ref="target"></div>`,
-};
-```
+**React or Vue host:** don't wire `createRuntimeHost` by hand with `useEffect`/`onMounted`/`watch` — that boilerplate (create on mount, forward path changes, tear down on unmount) is exactly what [`createReactAdapter`](#createreactadapterreact) and [`createVueAdapter`](#createvueadaptervue) below do for you, on top of `createRuntimeHostObservable`. Use `createRuntimeHost` directly only when neither adapter fits — a framework those packages don't cover, or a host with no framework at all (as above).
 
 Behavior notes:
 
 - `resolveAndMount(path)` is a no-op if `path` resolves to the specifier that's already mounted — everything past "which module owns this path" is that module's own responsibility (its own internal sub-routing, if any), not the host's.
 - If no route matches, or the import/mount throws, `onError(error, path)` is called and internal state resets so the next navigation isn't blocked. The default `onError` logs to the console and sets `target.textContent` to a generic failure message; pass your own to customize it or distinguish no-match from a real failure.
-- `onLoading(path)` fires right before a genuinely new module starts importing — there's no matching "loading finished" callback, since the loading UI is naturally replaced once the module's `mount()` (or `onError`) writes into `target`.
+- `onLoading(path)` fires right before a genuinely new module starts importing; `onReady(path)` fires once that module has actually finished mounting. Neither fires for a stale, superseded call.
 - One `createRuntimeHost` instance manages exactly one `target`/region. An app with more than one independently-loading region (e.g. a dynamic sidebar and a dynamic main area) creates one instance per region.
 - `createRuntimeHost` does not intercept clicks or call `history.pushState()` itself — it only reacts to a path you give it. Wire it to whatever produces navigation events: a raw `popstate` listener, a router's navigation callback, anything.
 - `destroy()` unmounts the current module (if any) and resets internal state — call it on host teardown or in tests.
+
+### `createRuntimeHostObservable(options)`
+
+A thin, subscribable status wrapper around `createRuntimeHost` — one `createRuntimeHost` instance internally, translating its `onLoading`/`onReady`/`onError` callbacks into a single observable `RuntimeHostStatus`. It's the primitive the React and Vue adapters below are built on; reach for it directly only if you're building a similar adapter for a framework this toolkit doesn't cover yet.
+
+```ts
+export type RuntimeHostStatus =
+  | { type: "idle" }
+  | { type: "loading"; path: string }
+  | { type: "ready"; path: string }
+  | { type: "error"; path: string; error: unknown };
+
+export type RuntimeHostObservableOptions = Pick<
+  RuntimeHostOptions,
+  "manifest" | "target" | "importer"
+>;
+
+export type RuntimeHostObservable = {
+  next(path: string): void;
+  subscribe(observer: (status: RuntimeHostStatus) => void): () => void;
+  getSnapshot(): RuntimeHostStatus;
+  destroy(): Promise<void>;
+};
+
+export const createRuntimeHostObservable: (
+  options: RuntimeHostObservableOptions,
+) => RuntimeHostObservable;
+```
+
+```ts
+import { createRuntimeHostObservable } from "@rmc-toolkit/core";
+
+const observable = createRuntimeHostObservable({
+  manifest,
+  target: document.getElementById("app")!,
+});
+
+const unsubscribe = observable.subscribe((status) => {
+  console.log(status); // { type: "idle" | "loading" | "ready" | "error", ... }
+});
+
+observable.next(window.location.pathname);
+window.addEventListener("popstate", () => observable.next(window.location.pathname));
+
+// later: unsubscribe(); void observable.destroy();
+```
+
+Notes:
+
+- Status starts at `{ type: "idle" }` before the first `next()` call, and only ever transitions on a non-stale outcome — a `next()` call superseded by a newer one before it settles never changes the status, matching `createRuntimeHost`'s own stale-call discarding.
+- `getSnapshot()` returns the *same object reference* across calls until a real transition happens. This matters if you build your own adapter on top of `getSnapshot()`/`subscribe()` with React's `useSyncExternalStore` — a fresh object on every call would look like a change on every render and loop forever.
+- `next()` is fire-and-forget by design — it never throws or rejects, since `createRuntimeHost.resolveAndMount()` already catches everything internally and reports failures through `onError`, which becomes an `"error"` status here.
 
 ### `notifyInternalNavigation(path)`
 
@@ -409,13 +406,84 @@ Helper used internally by `includeHostedImportMap`: derives a manifest with one 
 
 ## React adapter (`@rmc-toolkit/react`)
 
-### `DynamicModuleBoundary(props)`
+Both exports below are **factories**, not ready-to-use values: you pass in your host app's own already-resolved `React` module, and get back hooks/components closed over that exact instance. This is deliberate, not incidental ceremony — see "Why a factory, not a direct import" under `createReactAdapter` below.
 
-Loads and renders a React slice module inside the host's component tree — no iframes. Unlike `createRuntimeHost`, it expects the slice to default-export a plain React component rather than a `mount()`/`unmount()` pair; use whichever convention matches how your slices are written, not both for the same slice.
+### `createReactAdapter(React)`
+
+Wraps `createRuntimeHostObservable` in a React hook, eliminating the `useRef`/`useEffect` boilerplate a host would otherwise hand-write to create the observable on mount, forward path changes, subscribe to status, and tear down on unmount.
+
+```ts
+export const createReactAdapter: (
+  React: typeof import("react"),
+) => {
+  useRuntimeHost<T extends Element>(
+    path: string,
+    options: Pick<RuntimeHostObservableOptions, "manifest" | "importer">,
+  ): { ref: React.RefObject<T | null>; status: RuntimeHostStatus };
+};
+```
+
+Instantiate the adapter once, at module scope, with your app's own React instance — however it was resolved (bundled locally, loaded from a CDN via an import map, anything):
+
+```ts
+// src/rmc-adapter.ts
+import React from "react";
+import { createReactAdapter } from "@rmc-toolkit/react";
+
+export const { useRuntimeHost } = createReactAdapter(React);
+```
+
+Then use the returned `useRuntimeHost` hook in the host component, driven by whatever router the app already uses:
 
 ```tsx
+// App.tsx
+import { useLocation } from "react-router-dom";
+import { useRuntimeHost } from "./rmc-adapter";
+import { manifest } from "./runtime-composition.manifest";
+
+function App() {
+  const location = useLocation();
+  const { ref, status } = useRuntimeHost<HTMLElement>(location.pathname, { manifest });
+
+  return (
+    <div className="app-shell">
+      <SiteHeader loading={status.type === "loading"} />
+      <main ref={ref} />
+      {status.type === "error" && <ErrorBanner error={status.error} />}
+      <SiteFooter />
+    </div>
+  );
+}
+```
+
+`ref` attaches to whatever DOM element should host the mounted slice — an existing layout element, same as `createRuntimeHost`'s `target`, not necessarily a dedicated wrapper. `status` is a `RuntimeHostStatus` (`idle` / `loading` / `ready` / `error`), kept in sync via `React.useSyncExternalStore` under the hood, so it re-renders the component exactly when the status actually changes.
+
+**Why a factory, not a direct import:** an earlier version of this package's `DynamicModuleBoundary` (below) called `import React from "react"` directly. If a host app externalizes its own React differently than the adapter package resolves its import (a different bundler, a different CDN convention, or the adapter loaded from a CDN itself), the two can silently end up as two separate React copies — breaking hooks, Context, and Suspense across the boundary between them. Passing in the host's own already-resolved `React` instance removes the possibility entirely: there's no import path for the adapter package to get wrong, because it never imports React as a value at all (only as a type, which TypeScript erases). The same reasoning applies to `@rmc-toolkit/vue`'s `createVueAdapter` below.
+
+### `createDynamicModuleBoundary(React)`
+
+Same factory pattern as `createReactAdapter`, for the simpler component-convention loader: loads and renders a React slice module inside the host's component tree — no iframes. Unlike `createRuntimeHost`/`createReactAdapter`, it expects the slice to default-export a plain React component rather than a `mount()`/`unmount()` pair; use whichever convention matches how your slices are written, not both for the same slice.
+
+```ts
+export const createDynamicModuleBoundary: (
+  React: typeof import("react"),
+) => {
+  DynamicModuleBoundary: (props: DynamicModuleBoundaryProps) => React.ReactElement;
+};
+```
+
+```tsx
+// src/rmc-adapter.ts
+import React from "react";
+import { createDynamicModuleBoundary } from "@rmc-toolkit/react";
+
+export const { DynamicModuleBoundary } = createDynamicModuleBoundary(React);
+```
+
+```tsx
+// RouteSlot.tsx
 import { resolveRoute } from "@rmc-toolkit/core";
-import { DynamicModuleBoundary } from "@rmc-toolkit/react";
+import { DynamicModuleBoundary } from "./rmc-adapter";
 import { manifest } from "./runtime-composition.manifest";
 
 export function RouteSlot() {
@@ -441,11 +509,70 @@ Notes:
 - Built on `React.lazy()` and `React.Suspense`, using `importModule()` internally.
 - An internal error boundary catches both import failures and render failures.
 
+## Vue adapter (`@rmc-toolkit/vue`)
+
+### `createVueAdapter(Vue)`
+
+The Vue counterpart to `createReactAdapter` — same factory pattern, same underlying `createRuntimeHostObservable`, same reasoning for why the host's own `Vue` instance is passed in rather than imported by the package (see `createReactAdapter` above).
+
+```ts
+export const createVueAdapter: (
+  Vue: typeof import("vue"),
+) => {
+  useRuntimeHost(
+    path: () => string,
+    options: Pick<RuntimeHostObservableOptions, "manifest" | "importer">,
+  ): { target: import("vue").Ref<Element | null>; status: import("vue").Ref<RuntimeHostStatus> };
+};
+```
+
+Instantiate once, with the app's own Vue instance:
+
+```ts
+// src/rmc-adapter.ts
+import * as Vue from "vue";
+import { createVueAdapter } from "@rmc-toolkit/vue";
+
+export const { useRuntimeHost } = createVueAdapter(Vue);
+```
+
+`path` is a getter (`() => string`), not a plain string, so the adapter can watch it reactively:
+
+```ts
+// App.vue (render-function form)
+import { useRoute } from "vue-router";
+import { useRuntimeHost } from "./rmc-adapter";
+import { manifest } from "./runtime-composition.manifest";
+
+export default {
+  setup() {
+    const route = useRoute();
+    const { target, status } = useRuntimeHost(() => route.fullPath, { manifest });
+    return { target, status };
+  },
+  template: `
+    <div class="app-shell">
+      <SiteHeader :loading="status.type === 'loading'" />
+      <main ref="target"></main>
+      <ErrorBanner v-if="status.type === 'error'" :error="status.error" />
+      <SiteFooter />
+    </div>
+  `,
+};
+```
+
+Internally: `useRuntimeHost` creates one `createRuntimeHostObservable` in `onMounted` (once `target.value` is available), subscribes it to a reactive `status` ref, calls `observable.next()` once immediately and again on every reactive change to `path()` via `watch()`, and calls `observable.destroy()` in `onUnmounted`.
+
 ## Recommended order
 
 1. Define the manifest with `defineManifest()`.
 2. Validate it with `validateManifest()` in tests or CI.
 3. Generate the browser import map with `createImportMap()`, or via Vite with `runtimeComposition()` / `includeHostedImportMap()`.
 4. Build each slice with `defineSliceBuild()` plus `createRollupExternal()`.
-5. Bootstrap the host with `createRuntimeHost()` — resolving routes, importing, and mounting/unmounting slices that share the DOM `mount()`/`unmount()` convention — or with `DynamicModuleBoundary()` for a React host whose slices are plain React components. Use `resolveRoute()`, `importModule()`, and `unwrapDefault()` directly only if you need a custom lifecycle neither covers.
+5. Bootstrap the host:
+   - React host, slices share the DOM `mount()`/`unmount()` convention: `createReactAdapter()`'s `useRuntimeHost()`.
+   - React host, slices are plain React components: `createDynamicModuleBoundary()`'s `DynamicModuleBoundary`.
+   - Vue host, slices share the DOM `mount()`/`unmount()` convention: `createVueAdapter()`'s `useRuntimeHost()`.
+   - No framework, or a framework without a dedicated adapter yet: `createRuntimeHost()` directly (or `createRuntimeHostObservable()` if you want subscribable status without hand-rolling your own adapter).
+   - A fully custom lifecycle none of the above cover: `resolveRoute()`, `importModule()`, and `unwrapDefault()` directly.
 6. Have slices call `notifyInternalNavigation()` when they navigate internally, so the host's router notices.

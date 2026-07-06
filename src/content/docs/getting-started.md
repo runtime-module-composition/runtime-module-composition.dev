@@ -3,7 +3,7 @@ title: Getting Started
 description: Install rmc-toolkit and wire up a host shell and a slice in a few steps.
 ---
 
-[`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) is a small toolkit that implements the [Runtime Module Composition](/) pattern: a manifest-driven way to generate import maps, resolve routes to slice modules, and load those modules dynamically. It ships a framework-agnostic core plus Vite and React adapters.
+[`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) is a small toolkit that implements the [Runtime Module Composition](/) pattern: a manifest-driven way to generate import maps, resolve routes to slice modules, and load those modules dynamically. It ships a framework-agnostic core plus Vite, React, and Vue adapters.
 
 This guide wires up a minimal host and a minimal slice. See the [API Reference](/api-reference/) for every method, and [Technical Implementation](/technical-implementation/) for the architecture behind it.
 
@@ -12,15 +12,16 @@ This guide wires up a minimal host and a minimal slice. See the [API Reference](
 Each package is published independently — install the ones you need:
 
 ```bash
-npm install @rmc-toolkit/core @rmc-toolkit/vite @rmc-toolkit/react
+npm install @rmc-toolkit/core @rmc-toolkit/vite @rmc-toolkit/react @rmc-toolkit/vue
 ```
 
-A host that isn't React-based (or a slice that doesn't use Vite) can skip the adapters it doesn't need — `@rmc-toolkit/core` has no dependency on either.
+A host that isn't React- or Vue-based (or a slice that doesn't use Vite) can skip the adapters it doesn't need — `@rmc-toolkit/core` has no dependency on any of them.
 
 ```ts
 import { defineManifest, createRuntimeHost } from "@rmc-toolkit/core";
 import { runtimeComposition, defineSliceBuild } from "@rmc-toolkit/vite";
-import { DynamicModuleBoundary } from "@rmc-toolkit/react";
+import { createReactAdapter, createDynamicModuleBoundary } from "@rmc-toolkit/react";
+import { createVueAdapter } from "@rmc-toolkit/vue";
 ```
 
 ## 1. Define a manifest
@@ -69,33 +70,82 @@ export default defineConfig({
 
 `runtimeComposition()` returns two plugins: one that injects the generated import map into `index.html` before any module script runs, and one that tells Vite not to bundle or rewrite specifiers the import map owns.
 
-## 3. Bootstrap the host with `createRuntimeHost`
+## 3. Bootstrap the host
 
-`createRuntimeHost()` owns the resolve → import → mount/unmount lifecycle for one target element, including error recovery and protection against rapid-navigation races (see [API Reference](/api-reference/#createruntimehostoptions) for what that means). This example assumes each slice exports a `mount(target, context)`/`unmount()` pair — one convention you can choose, not something the library enforces:
+Every option below shares the same underlying lifecycle — resolve the route, import the slice, mount/unmount it, with built-in error recovery and protection against rapid-navigation races (see [API Reference](/api-reference/#createruntimehostoptions) for what that means). Pick based on your host's framework and which slice convention you're using (DOM `mount()`/`unmount()`, or a plain default-exported component).
+
+**React host, slices share the `mount()`/`unmount()` convention:** use `createReactAdapter`, which wraps the lifecycle in a `useRuntimeHost` hook — no manual `useEffect`/`useRef` wiring needed. Instantiate it once with your app's own `React` instance:
 
 ```ts
-// src/main.ts
-import { createRuntimeHost } from "@rmc-toolkit/core";
-import { manifest } from "../runtime-composition.manifest";
+// src/rmc-adapter.ts
+import React from "react";
+import { createReactAdapter } from "@rmc-toolkit/react";
 
-const host = createRuntimeHost({
-  manifest,
-  target: document.getElementById("app")!,
-});
-
-window.addEventListener("popstate", () => {
-  void host.resolveAndMount(window.location.pathname);
-});
-void host.resolveAndMount(window.location.pathname); // initial load
+export const { useRuntimeHost } = createReactAdapter(React);
 ```
 
-`createRuntimeHost` only reacts to a path string — it doesn't intercept clicks or call `pushState` itself. If the host already has its own router (React Router, Vue Router, or similar), call `resolveAndMount()` from that router's navigation callback instead of adding a `popstate` listener. See [API Reference](/api-reference/#createruntimehostoptions) for a React Router and a Vue Router example.
+```tsx
+// App.tsx
+import { useLocation } from "react-router-dom";
+import { useRuntimeHost } from "./rmc-adapter";
+import { manifest } from "./runtime-composition.manifest";
 
-React hosts whose slices simply default-export a plain component (rather than a `mount()`/`unmount()` pair) can skip `createRuntimeHost` entirely and use `DynamicModuleBoundary` instead:
+function App() {
+  const location = useLocation();
+  const { ref, status } = useRuntimeHost<HTMLElement>(location.pathname, { manifest });
+
+  return (
+    <div className="app-shell">
+      <SiteHeader loading={status.type === "loading"} />
+      <main ref={ref} />
+      <SiteFooter />
+    </div>
+  );
+}
+```
+
+**Vue host, slices share the `mount()`/`unmount()` convention:** the same shape, via `createVueAdapter`. `path` is a getter so the adapter can watch it reactively:
+
+```ts
+// src/rmc-adapter.ts
+import * as Vue from "vue";
+import { createVueAdapter } from "@rmc-toolkit/vue";
+
+export const { useRuntimeHost } = createVueAdapter(Vue);
+```
+
+```ts
+// App.vue (render-function form)
+import { useRoute } from "vue-router";
+import { useRuntimeHost } from "./rmc-adapter";
+import { manifest } from "./runtime-composition.manifest";
+
+export default {
+  setup() {
+    const route = useRoute();
+    const { target, status } = useRuntimeHost(() => route.fullPath, { manifest });
+    return { target, status };
+  },
+  template: `<main ref="target"></main>`,
+};
+```
+
+Both adapters are factories, not ready-to-use values — you pass in your host's own already-resolved `React`/`Vue` instance rather than the package importing one itself. That's what lets a React or Vue adapter published as its own npm package avoid ever bundling a second, conflicting copy of the framework: see [API Reference](/api-reference/#createreactadapterreact) for why this matters.
+
+**React host, slices are plain default-exported components (not `mount()`/`unmount()`):** use `createDynamicModuleBoundary` instead — same factory pattern, simpler contract:
 
 ```tsx
+// src/rmc-adapter.ts
+import React from "react";
+import { createDynamicModuleBoundary } from "@rmc-toolkit/react";
+
+export const { DynamicModuleBoundary } = createDynamicModuleBoundary(React);
+```
+
+```tsx
+// RouteSlot.tsx
 import { resolveRoute } from "@rmc-toolkit/core";
-import { DynamicModuleBoundary } from "@rmc-toolkit/react";
+import { DynamicModuleBoundary } from "./rmc-adapter";
 import { manifest } from "./runtime-composition.manifest";
 
 export function RouteSlot() {
@@ -113,7 +163,27 @@ export function RouteSlot() {
 }
 ```
 
-These are two different slice conventions, not competing versions of the same thing: pick `createRuntimeHost` when slices (possibly written in different frameworks) share the DOM `mount()`/`unmount()` contract, or `DynamicModuleBoundary` when every slice is a plain React component and the host is React too.
+These are different slice conventions, not competing versions of the same thing — pick the adapter matching how your slices are written, not both for the same slice.
+
+**No framework, or a framework without a dedicated adapter yet:** use `createRuntimeHost` directly.
+
+```ts
+// src/main.ts
+import { createRuntimeHost } from "@rmc-toolkit/core";
+import { manifest } from "../runtime-composition.manifest";
+
+const host = createRuntimeHost({
+  manifest,
+  target: document.getElementById("app")!,
+});
+
+window.addEventListener("popstate", () => {
+  void host.resolveAndMount(window.location.pathname);
+});
+void host.resolveAndMount(window.location.pathname); // initial load
+```
+
+`createRuntimeHost` only reacts to a path string — it doesn't intercept clicks or call `pushState` itself. Wire it to whatever produces navigation events: a raw `popstate` listener (as above), or a router's navigation callback.
 
 ## 4. Build a slice
 
