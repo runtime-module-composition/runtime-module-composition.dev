@@ -29,27 +29,31 @@ There is no root/meta package — install `@rmc-toolkit/core`, `@rmc-toolkit/vit
 | `exactImports` | no | Escape hatch: exact specifier &rarr; URL entries, for dependencies that don't fit the namespace or external-deps conventions. |
 | `sliceOverrides` | no | Escape hatch: explicit slice definitions (route, specifier, entry) for slices that don't fit convention-based routing. |
 | `routeOverrides` | no | Escape hatch: explicit route &rarr; specifier mappings that take priority over convention-based resolution. |
-| `externalDeps` | no | List of external dependency package names (or `{ name, peerDeps }`) to include in the generated import map. This is how framework packages (React, Vue) and shared libraries (Lodash, Zustand, a design system) get onto the import map in the first place — see [External Dependencies](#external-dependencies) below. |
-| `defaultPeerDeps` | no | Peer-dependency query params applied to string entries in `externalDeps`. See [External Dependencies](#external-dependencies) below. |
+| `externalDeps` | no | List of external dependency entries (`{ name, version, peerDeps? }`) to include in the generated import map. This is how framework packages (React, Vue) and shared libraries (Lodash, Zustand, a design system) get onto the import map in the first place — see [External Dependencies](#external-dependencies) below. |
+| `defaultPeerDeps` | no | Peer package **names** (not versions) applied automatically to every `externalDeps` entry that doesn't set its own `peerDeps`. See [External Dependencies](#external-dependencies) below. |
 
 ### External Dependencies
 
 `externalDeps` is the manifest field that actually puts framework packages and shared libraries onto the import map — this is the mechanism that lets every slice import the same copy of React, Vue, Lodash, Zustand, or a UI kit, instead of each slice bundling (and shipping) its own. Get this wrong and the failure mode isn't a build error — it's a duplicate framework instance at runtime, breaking hooks, Context, or reactivity in ways that are hard to trace back to "the import map".
 
-Each entry is either a bare package name, or an object form for when that package needs specific peer-dependency pinning:
+Every entry is an object with a required version, kept entirely separate from the specifier the rest of your code imports:
 
 ```ts
-export type ExternalDepEntry =
-  | string
-  | {
-      name: string;
-      peerDeps?: Record<string, string> | false;
-    };
+export type ExternalDepEntry = {
+  /** Bare package name, or a subpath import, e.g. "react" or "react-dom/client". */
+  name: string;
+  /** Always required. */
+  version: string;
+  /** Peer package NAMES (not versions) to pin via esm.sh's `?deps=` query. */
+  peerDeps?: string[] | false;
+};
 ```
 
-`name` includes the version, e.g. `"react@19.2.4"` — there's no separate version field. The entry becomes an import-map key of `${externalDepsPrefix}${name}` (defaulting to `@esm.sh/react@19.2.4`) pointing at `${externalDepsOrigin}/${name}` (e.g. `https://esm.sh/react@19.2.4`).
+This split matters: the import-map **key** never includes a version (`@esm.sh/react`, stable across every version bump), while the **URL** it resolves to does (`https://esm.sh/react@19.2.4`). Versioning the key itself — an earlier, buggier shape this toolkit used to have — meant every dependency version bump required touching every import statement across every slice that imported it. Worse, a bare entry with no version field at all could silently resolve to whatever "latest" a CDN serves at request time, while a *different* entry pinned a peer to a specific version of the same underlying package — two different URLs serving two genuinely separate module instances of what should be one shared dependency, breaking hooks/Context/reactivity across the split in ways that are painful to trace back to an import map. Requiring `version` on every entry closes that hole structurally: there's no field left to omit it from.
 
-**Why `peerDeps` exists:** some CDN-served packages (esm.sh in particular) have peer dependencies of their own — a UI kit like `@radix-ui/themes` depends on `react`/`react-dom` as peers, and the CDN needs to be told which exact version to resolve those peer imports to, via a `?deps=` query on the URL, or it may resolve them to a different (or the latest) version than the rest of your app uses — silently reintroducing the duplicate-instance problem `externalDeps` exists to prevent. `defaultPeerDeps` sets that `?deps=` pin once, applied automatically to **every bare-string** `externalDeps` entry. Packages that shouldn't get it — the framework packages themselves, or dependency-free libraries like Lodash — need the object form with `peerDeps: false` to explicitly opt out; there's no way to exclude a bare-string entry from `defaultPeerDeps` other than converting it to that form.
+**Why `peerDeps` exists:** some CDN-served packages (esm.sh in particular) have peer dependencies of their own — a UI kit like `@radix-ui/themes` depends on `react`/`react-dom` as peers, and the CDN needs to be told which exact version to resolve those peer imports to, via a `?deps=` query on the URL, or it may resolve them to a different version than the rest of your app uses. `peerDeps` (and `defaultPeerDeps`, applied automatically when an entry doesn't set its own) takes only peer **names** — never versions. Each name's version is looked up from that name's own `externalDeps` entry at generation time, so there's exactly one place each dependency's version is declared, and bumping it there automatically updates every `?deps=` query that references it. Packages that shouldn't inherit `defaultPeerDeps` — the framework packages themselves, or dependency-free libraries like Lodash — opt out with `peerDeps: false`.
+
+A subpath import like `react-dom/client` is its own full `externalDeps` entry — the version gets inserted between the base package and the subpath (`react-dom@19.2.4/client`), not appended to the end.
 
 ```ts
 // runtime-composition.manifest.ts
@@ -59,23 +63,22 @@ export const manifest = defineManifest({
   namespace: "@acme",
   assetsOrigin: "https://assets.example.com",
   externalDepsOrigin: "https://esm.sh",
-  // Applied automatically to every bare-string entry below, unless that
-  // entry opts out with `peerDeps: false`.
-  defaultPeerDeps: {
-    react: "19.2.4",
-    "react-dom": "19.2.4",
-  },
+  // Applied automatically to every entry below that doesn't set its own
+  // `peerDeps`, unless that entry opts out with `peerDeps: false`.
+  defaultPeerDeps: ["react", "react-dom"],
   externalDeps: [
     // Framework packages: nothing to pin against themselves.
-    { name: "react@19.2.4", peerDeps: false },
-    { name: "react-dom@19.2.4", peerDeps: false },
-    { name: "vue@3.5.0", peerDeps: false },
+    { name: "react", version: "19.2.4", peerDeps: false },
+    { name: "react-dom", version: "19.2.4", peerDeps: false },
+    { name: "react-dom/client", version: "19.2.4", peerDeps: false },
+    { name: "vue", version: "3.5.0", peerDeps: false },
     // Dependency-free utility libraries: also opt out.
-    { name: "lodash-es@4.17.21", peerDeps: false },
-    { name: "zustand@4.5.0", peerDeps: false },
+    { name: "lodash-es", version: "4.17.21", peerDeps: false },
+    { name: "zustand", version: "4.5.0", peerDeps: false },
     // A React UI library with a real peer dependency on react/react-dom:
-    // given as a bare string, so it inherits defaultPeerDeps automatically.
-    "@radix-ui/themes@3.0.0",
+    // no peerDeps set, so it inherits defaultPeerDeps automatically —
+    // versions come from the react/react-dom entries above, not typed here.
+    { name: "@radix-ui/themes", version: "3.0.0" },
   ],
 });
 ```
@@ -87,27 +90,31 @@ export const manifest = defineManifest({
   "imports": {
     "@acme/": "https://assets.example.com/",
     "@esm.sh/": "https://esm.sh/",
-    "@esm.sh/react@19.2.4": "https://esm.sh/react@19.2.4",
-    "@esm.sh/react-dom@19.2.4": "https://esm.sh/react-dom@19.2.4",
-    "@esm.sh/vue@3.5.0": "https://esm.sh/vue@3.5.0",
-    "@esm.sh/lodash-es@4.17.21": "https://esm.sh/lodash-es@4.17.21",
-    "@esm.sh/zustand@4.5.0": "https://esm.sh/zustand@4.5.0",
-    "@esm.sh/@radix-ui/themes@3.0.0": "https://esm.sh/@radix-ui/themes@3.0.0?deps=react@19.2.4,react-dom@19.2.4"
+    "@esm.sh/react": "https://esm.sh/react@19.2.4",
+    "@esm.sh/react-dom": "https://esm.sh/react-dom@19.2.4",
+    "@esm.sh/react-dom/client": "https://esm.sh/react-dom@19.2.4/client",
+    "@esm.sh/vue": "https://esm.sh/vue@3.5.0",
+    "@esm.sh/lodash-es": "https://esm.sh/lodash-es@4.17.21",
+    "@esm.sh/zustand": "https://esm.sh/zustand@4.5.0",
+    "@esm.sh/@radix-ui/themes": "https://esm.sh/@radix-ui/themes@3.0.0?deps=react@19.2.4,react-dom@19.2.4"
   }
 }
 ```
 
-Every slice imports these through the stable `@esm.sh/` specifiers rather than installing the packages themselves:
+Every slice imports these through the stable, version-free `@esm.sh/` specifiers rather than installing the packages themselves — none of these import statements need to change when a version bumps in the manifest:
 
 ```ts
-import React from "@esm.sh/react@19.2.4";
-import * as Vue from "@esm.sh/vue@3.5.0";
-import { debounce } from "@esm.sh/lodash-es@4.17.21";
-import { create } from "@esm.sh/zustand@4.5.0";
-import { Theme } from "@esm.sh/@radix-ui/themes@3.0.0";
+import React from "@esm.sh/react";
+import { createRoot } from "@esm.sh/react-dom/client";
+import * as Vue from "@esm.sh/vue";
+import { debounce } from "@esm.sh/lodash-es";
+import { create } from "@esm.sh/zustand";
+import { Theme } from "@esm.sh/@radix-ui/themes";
 ```
 
-Note that only the exact specifier is mapped (no trailing-slash prefix mapping, unlike the namespace or slice-origin entries) — a deep import like `@esm.sh/lodash-es@4.17.21/debounce` won't resolve through this import map, so import named exports from the package's main entry instead, as above.
+Note that only the exact specifier is mapped (no trailing-slash prefix mapping, unlike the namespace or slice-origin entries) — a deep import like `@esm.sh/lodash-es/debounce` won't resolve through this import map, so import named exports from the package's main entry instead (as above), or give the subpath its own `externalDeps` entry the way `react-dom/client` does here.
+
+**What happens with bad input:** `createImportMap` never throws. Two entries sharing a base package (e.g. `react-dom` and `react-dom/client`) that declare *different* versions each still generate their own well-formed URL from their own version — the mismatch stays visible in the output rather than being silently resolved one way or the other. A `peerDeps` name with no matching entry is silently dropped from that entry's `?deps=` query. Both cases are exactly what [`validateManifest`](#validatemanifestmanifest) exists to catch — as warnings, not build failures, so a manifest mistake shows up in CI without ever blocking a build. Run it whenever you add or change `externalDeps`.
 
 ## Core (`@rmc-toolkit/core`)
 
@@ -352,7 +359,7 @@ if (errors.length > 0) {
 }
 ```
 
-Errors: `assetsOrigin` or `externalDepsOrigin` isn't an absolute HTTP(S) URL. Warnings: non-`@`-prefixed namespace, `externalDepsPrefix` missing a trailing slash, slice or route override specifiers that don't start with the namespace, slice entries that don't look like ESM assets.
+Errors: `assetsOrigin` or `externalDepsOrigin` isn't an absolute HTTP(S) URL. Warnings: non-`@`-prefixed namespace, `externalDepsPrefix` missing a trailing slash, slice or route override specifiers that don't start with the namespace, slice entries that don't look like ESM assets, `externalDeps` entries that share a base package but declare different versions, and `peerDeps`/`defaultPeerDeps` names with no matching `externalDeps` entry (see [External Dependencies](#external-dependencies) above). Both new `externalDeps` checks are warnings, not errors — deliberately, so a mistake here shows up in CI without blocking a build.
 
 ### URL helpers
 
