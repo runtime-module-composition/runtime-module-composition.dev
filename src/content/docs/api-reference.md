@@ -168,6 +168,20 @@ const script = createImportMapBootstrapScript(manifest, { environment: "producti
 
 The generated script detects a `?dev` query parameter on its own `<script src>` at runtime (via `document.currentScript`) and appends `?dev` to external-dependency URLs when present, so the same deployed script can serve both a normal and a dev-flagged import map.
 
+### `resolveImportMapSpecifier(importMap, specifier)`
+
+Resolves a specifier against an already-generated `ImportMap` the same way a browser resolves import maps: an exact key wins; otherwise the longest key ending in `/` that the specifier starts with (a prefix mapping), with the remainder appended to that prefix's target. Returns `undefined` if nothing matches.
+
+```ts
+import { createImportMap, resolveImportMapSpecifier } from "@rmc-toolkit/core";
+
+const importMap = createImportMap(manifest, { environment: "development" });
+resolveImportMapSpecifier(importMap, "@esm.sh/react"); // -> "https://esm.sh/react@19.2.4"
+resolveImportMapSpecifier(importMap, "@acme/search/index.mjs"); // -> prefix-matched via "@acme/"
+```
+
+Used internally by `externalizeRuntimeComposition()`'s dev-mode resolution (see above) — reach for it directly only if you're building a similar Vite-dev-server integration this toolkit doesn't already cover.
+
 ### `resolveRoute(manifest, path)`
 
 Maps a URL path to the slice that owns it.
@@ -365,6 +379,8 @@ Errors: `assetsOrigin` or `externalDepsOrigin` isn't an absolute HTTP(S) URL. Wa
 
 `joinUrl(origin, path)`, `trimLeadingSlash(value)`, and `trimTrailingSlash(value)` are small utilities used internally by import-map generation. They're exported for deployment adapters that need to resolve asset URLs consistently with core.
 
+`splitPackageSpecifier(name)` splits a package specifier into its base package and an optional subpath, handling scoped packages: `splitPackageSpecifier("react-dom/client")` returns `{ basePackage: "react-dom", subpath: "client" }`; `splitPackageSpecifier("@radix-ui/themes")` returns `{ basePackage: "@radix-ui/themes", subpath: null }`. Used internally to group `externalDeps` entries that share a base package (for the version-conflict check in `validateManifest`) and to insert a version between the base package and subpath when generating a URL (`react-dom@19.2.4/client`, not `react-dom/client@19.2.4`).
+
 ## Vite adapter (`@rmc-toolkit/vite`)
 
 ### `runtimeComposition(options)`
@@ -409,6 +425,8 @@ export default defineConfig({
 });
 ```
 
+Marking a specifier `external: true` is enough for a production build — Rollup preserves it untouched in the output bundle for the browser's import map to resolve. Vite's dev server does not honor a bare specifier the same way: its import-analysis step rewrites anything merely marked external into an internal, unresolvable `/@id/<specifier>` placeholder request instead of leaving it for the browser. So in dev mode specifically, this plugin resolves each externalized specifier to its real absolute URL (via `resolveImportMapSpecifier()`, against the same import map `createImportMap()` would generate) before returning it, rather than returning the bare specifier as-is. This is transparent to callers — `runtimeComposition()`/`externalizeRuntimeComposition()` handle it internally — but it's why dev and build resolve the same specifier to different-looking `resolveId` results if you inspect them directly.
+
 ### `defineSliceBuild(options)`
 
 Mode-aware Vite config for a **slice's** own `vite.config.ts`, replacing hand-copied build boilerplate. It does not externalize import-map-owned dependencies by itself — pair it with `createRollupExternal()` for that (see [Getting Started](/getting-started/#4-build-a-slice)).
@@ -417,6 +435,7 @@ Mode-aware Vite config for a **slice's** own `vite.config.ts`, replacing hand-co
 export type SliceBuildOptions = {
   mode: string;      // pass through from defineConfig(({ mode }) => ...)
   devPort: number;
+  sliceName: string; // determines the production outDir: dist/{sliceName}
   entry?: string;    // defaults to auto-detected src/index.tsx or src/index.ts
 };
 
@@ -429,7 +448,7 @@ import { defineSliceBuild, createRollupExternal } from "@rmc-toolkit/vite";
 import { manifest } from "./runtime-composition.manifest";
 
 export default defineConfig(({ mode }) => {
-  const sliceBuild = defineSliceBuild({ mode, devPort: 5174 });
+  const sliceBuild = defineSliceBuild({ mode, devPort: 5174, sliceName: "search" });
 
   return mode === "development"
     ? sliceBuild
@@ -445,8 +464,9 @@ export default defineConfig(({ mode }) => {
 
 Behavior:
 
-- In `development` mode, returns only `{ server: { port: devPort } }`.
-- In any other mode (production, or a custom mode), returns a library-build config: `build.lib` (entry, `formats: ["es"]`, `fileName: () => "index.mjs"`), `preview: { cors: true }` (needed for cross-origin loading by the host), and a `define` for `process.env.NODE_ENV` — Vite's library-build mode doesn't auto-replace this the way its app-build mode does, which otherwise leaves a raw `process` reference in the bundle and throws `ReferenceError: process is not defined` when the browser loads it directly via native `import()`.
+- In `development` mode, returns only `{ server: { port: devPort } }` — `sliceName` has no effect here.
+- In any other mode (production, or a custom mode), returns a library-build config: `build.outDir` (`dist/{sliceName}`), `build.lib` (entry, `formats: ["es"]`, `fileName: () => "index.mjs"`), `preview: { cors: true }` (needed for cross-origin loading by the host), and a `define` for `process.env.NODE_ENV` — Vite's library-build mode doesn't auto-replace this the way its app-build mode does, which otherwise leaves a raw `process` reference in the bundle and throws `ReferenceError: process is not defined` when the browser loads it directly via native `import()`.
+- `sliceName` is required, with no derivation from `package.json`'s own `name` field — every slice states it explicitly, matching the same slice-name concept the manifest's route resolution and `sliceOrigins` already treat as first-class. The resulting `dist/{sliceName}/index.mjs` matches the `{assetsOrigin}/{sliceName}/index.mjs` path convention `resolveRoute()`/`createImportMap()` already assume for a conventionally-resolved slice, so a production deploy needs no separate step to rename or nest each slice's build output — only to collect multiple slices' `dist/` directories into one upload (a deploy-pipeline concern this helper doesn't own).
 - Entry resolution: uses `entry` if provided; otherwise checks for `src/index.tsx`, then `src/index.ts`, relative to the current working directory. Throws synchronously if neither exists and no `entry` was given.
 
 ### `createRollupExternal(manifest)`
@@ -466,14 +486,17 @@ export default defineConfig({
 
 ### `includeHostedImportMap(options)`
 
-Dev-server middleware that serves a dynamically generated import-map script from a configurable path (default `/js/importmap.js`), for setups that deliver the import map as a standalone hosted asset rather than through Vite's HTML transform.
+Returns an array of two plugins for setups that deliver the import map as a standalone hosted asset (e.g. `/js/importmap.js`) rather than through Vite's HTML transform:
+
+1. Dev-server middleware that serves a dynamically generated import-map script from a configurable path (default `/js/importmap.js`).
+2. A dev-only HTML-ordering-safety plugin (wraps the published [`vite-plugin-js-importmap-script`](https://github.com/runtime-module-composition/vite-plugin-js-importmap-script)) that repositions the import-map script tag to the very front of `<head>` and appends a `?dev`/`&dev` flag, on every dev request.
 
 ```ts
 import { includeHostedImportMap } from "@rmc-toolkit/vite";
 
 export default defineConfig({
   plugins: [
-    includeHostedImportMap({
+    ...includeHostedImportMap({
       manifest,
       path: "/js/importmap.js",
       localSlice: { name: "search", port: 5174 },
@@ -482,7 +505,15 @@ export default defineConfig({
 });
 ```
 
-Options: `manifest` (required), `path` (default `/js/importmap.js`), `localSlice` (`{ name, port }`) — overrides one slice's dev-server origin in the served manifest without editing the shared manifest file. Only responds to `GET`/`HEAD` requests at the exact configured path.
+Options: `manifest` (required), `path` (default `/js/importmap.js`), `localSlice` (`{ name, port }`) — overrides one slice's dev-server origin in the served manifest without editing the shared manifest file. The middleware only responds to `GET`/`HEAD` requests at the exact configured path.
+
+**Your HTML must declare the hosted import map as a plain external script, in this exact attribute order, for the second plugin to find and reposition it:**
+
+```html
+<script data-src-type="importmap" src="/js/importmap.js"></script>
+```
+
+Why this matters: per the HTML spec, a document's "import maps allowed" state flips to `false` — permanently, for that page load — the moment the first module script (or module preload) is fetched. Vite's dev server always injects its own `type="module"` scripts (the HMR client, and the React refresh preamble under `@vitejs/plugin-react`). If either of those gets prepared before the import-map script tag is parsed, the import map is rejected outright, not merely reordered, and every bare-specifier import in the app fails. The ordering-safety plugin closes this by actively moving the tag to the front of `<head>` on every dev request instead of relying on Vite's internal plugin-hook ordering (undocumented, not guaranteed across versions). It's dev-only (`apply: "serve"`) since it always appends the dev-flag query unconditionally and has no build-mode awareness of its own — never wire it into a production build.
 
 ### `buildLocalImportMapScript(manifest, localSlice)`
 

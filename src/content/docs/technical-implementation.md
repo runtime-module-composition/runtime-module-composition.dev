@@ -299,7 +299,7 @@ Injecting the import map through the build's HTML transform works well when the 
 
 In that shape, the import map is generated as a small bootstrap script (rather than inlined HTML) and served from its own path, such as `/js/importmap.js`. The script detects a dev-mode flag from its own `<script src>` at request time and appends it to relevant URLs, so the same served script can answer both a plain request and a dev-flagged one without the caller needing two separate assets. A local dev server can further override a single slice's origin in the served script — useful when one engineer is actively developing one slice locally against an otherwise-shared, deployed manifest.
 
-The script must still land in `<head>` before any dependent module script runs, same as the inline-HTML approach — only the delivery mechanism changes, not the ordering constraint.
+The script must still land in `<head>` before any dependent module script runs, same as the inline-HTML approach — only the delivery mechanism changes, not the ordering constraint. This is a real, spec-level risk during local development specifically: a dev server that injects its own module scripts (an HMR client, a framework refresh preamble) can win the race and get the import map rejected outright rather than merely reordered, if the import-map script tag isn't actively kept at the very front of `<head>` on every request. [`includeHostedImportMap()`](/api-reference/#includehostedimportmapoptions) is a ready-made implementation of this delivery mechanism, including that ordering safeguard.
 
 ## Versioning Strategy
 

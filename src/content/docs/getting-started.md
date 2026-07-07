@@ -196,7 +196,7 @@ import { defineSliceBuild, createRollupExternal } from "@rmc-toolkit/vite";
 import { manifest } from "./runtime-composition.manifest";
 
 export default defineConfig(({ mode }) => {
-  const sliceBuild = defineSliceBuild({ mode, devPort: 5174 });
+  const sliceBuild = defineSliceBuild({ mode, devPort: 5174, sliceName: "search" });
 
   return mode === "development"
     ? sliceBuild
@@ -210,7 +210,7 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-`defineSliceBuild` looks for `src/index.tsx`, then `src/index.ts`, unless you pass an explicit `entry`.
+`sliceName` is required and determines where the production build lands: `dist/{sliceName}/index.mjs`, matching the same `{assetsOrigin}/{sliceName}/index.mjs` path `resolveRoute()`/`createImportMap()` already assume for conventionally-resolved slices — so a slice's own build output requires no separate assembly step to match the production URL it will be deployed at. `defineSliceBuild` looks for `src/index.tsx`, then `src/index.ts`, unless you pass an explicit `entry`.
 
 A React slice imports its dependencies through the import map's external prefix and default-exports a component:
 
