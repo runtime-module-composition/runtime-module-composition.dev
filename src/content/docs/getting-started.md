@@ -248,5 +248,6 @@ if (errors.length > 0) {
 
 ## Next steps
 
+- [Multi-Framework Demo](/demo/) — a full, runnable reference implementation: a host composing React, Vue, and vanilla JS slices, all built and deployed independently.
 - [API Reference](/api-reference/) — every exported method, with implementation notes.
 - [Technical Implementation](/technical-implementation/) — the architecture, failure modes, and operational checklist behind the pattern.

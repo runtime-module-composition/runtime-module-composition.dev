@@ -35,6 +35,7 @@ export default defineConfig({
           label: "Library",
           items: [
             { label: "Getting Started", slug: "getting-started" },
+            { label: "Multi-Framework Demo", slug: "demo" },
             { label: "API Reference", slug: "api-reference" },
           ],
         },
