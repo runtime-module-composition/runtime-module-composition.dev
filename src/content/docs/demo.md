@@ -10,7 +10,7 @@ description: A working reference implementation composing React, Vue, and vanill
 - **`rmc-shell`** — a React Router host that resolves routes to slices and mounts/unmounts them via [`createReactAdapter`](/api-reference/#createreactadapterreact).
 - **`rmc-react-app`**, **`rmc-vue-app`**, **`rmc-vanilla-app`** — three independently-built slices, one per framework (React, Vue, and no framework at all), each built and deployed separately from the shell and from each other.
 - **`rmc-manifest`** — the single shared manifest package every workspace imports, so the namespace, external dependency versions, and slice contract stay consistent across the whole system.
-- **`rmc-index`** — a production-style static asset host, built with [`includeRuntimeImportMap()`](/api-reference/#includeruntimeimportmapoptions), proving the import map can be generated and served the same way a real production deployment would.
+- **`rmc-index`** — a production-style static asset host, built with [`includeRuntimeImportMap()`](/api-reference/#includeruntimeimportmapoptions), matching how a real production deployment would generate and serve the import map.
 
 This is the same shape as the production system `rmc-toolkit` was extracted from: an independently deployed host and slices, sharing dependencies through the browser's own module resolution rather than a bundler.
 
