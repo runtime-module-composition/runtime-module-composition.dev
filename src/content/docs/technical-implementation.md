@@ -5,7 +5,7 @@ description: How Runtime Module Composition works in production with a host shel
 
 Runtime Module Composition is a browser-native micro frontend strategy for composing independently built and deployed JavaScript modules at runtime. Instead of producing one application bundle, a host shell loads a shared import map, resolves route ownership, and dynamically imports the frontend module responsible for the current user journey.
 
-This document describes the reusable technical implementation pattern itself, independent of any specific tooling. If you want a ready-made implementation instead of hand-rolling one, [`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) implements everything below as `defineManifest()`, `createImportMap()`, `createRuntimeHost()`, and framework adapters — see [Getting Started](/getting-started/) and the [API Reference](/api-reference/).
+This document describes the reusable technical implementation pattern itself, independent of any specific tooling. If you want a ready-made implementation instead of hand-rolling one, [`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) implements everything below as `defineManifest()`, `createImportMap()`, `createRuntimeHost()`, and framework adapters — see [Quick Start](/quick-start/) and the [API Reference](/api-reference/).
 
 ## Goals
 

@@ -3,7 +3,7 @@ title: Multi-Framework Demo
 description: A working reference implementation composing React, Vue, and vanilla JS slices at runtime through import maps.
 ---
 
-[`rmc-demo-architecture`](https://github.com/runtime-module-composition/rmc-demo-architecture) is a full, runnable reference implementation of the pattern described in [Getting Started](/getting-started/) — a real host shell composing three independently-built slices, each written in a different framework, entirely through import maps.
+[`rmc-demo-architecture`](https://github.com/runtime-module-composition/rmc-demo-architecture) is a full, runnable reference implementation of the pattern described in [Quick Start](/quick-start/) — a real host shell composing three independently-built slices, each written in a different framework, entirely through import maps.
 
 ## What it proves
 

@@ -32,9 +32,16 @@ export default defineConfig({
           ],
         },
         {
+          label: "Quick Start",
+          items: [
+            { label: "Overview", slug: "quick-start" },
+            { label: "React", slug: "quick-start/react" },
+            { label: "Vue", slug: "quick-start/vue" },
+          ],
+        },
+        {
           label: "Library",
           items: [
-            { label: "Getting Started", slug: "getting-started" },
             { label: "Multi-Framework Demo", slug: "demo" },
             { label: "API Reference", slug: "api-reference" },
           ],

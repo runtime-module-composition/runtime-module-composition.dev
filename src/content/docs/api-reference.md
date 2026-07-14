@@ -3,7 +3,7 @@ title: API Reference
 description: Every exported method in rmc-toolkit, with usage examples and implementation notes.
 ---
 
-[`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) is split into a framework-agnostic core plus adapters, published as four independent packages. This reference covers every public export. New to the library? Start with [Getting Started](/getting-started/).
+[`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) is split into a framework-agnostic core plus adapters, published as four independent packages. This reference covers every public export. New to the library? Start with [Quick Start](/quick-start/).
 
 ```ts
 import { createExternalMatcher, createImportMap /* ... */ } from "@rmc-toolkit/core";
@@ -429,7 +429,7 @@ Marking a specifier `external: true` is enough for a production build — Rollup
 
 ### `defineSliceBuild(options)`
 
-Mode-aware Vite config for a **slice's** own `vite.config.ts`, replacing hand-copied build boilerplate. It does not externalize import-map-owned dependencies by itself — pair it with `createRollupExternal()` for that (see [Getting Started](/getting-started/#4-build-a-slice)).
+Mode-aware Vite config for a **slice's** own `vite.config.ts`, replacing hand-copied build boilerplate. It does not externalize import-map-owned dependencies by itself — pair it with `createRollupExternal()` for that (see [Quick Start: React](/quick-start/react/#9-build-the-slice-as-an-esm-library)).
 
 ```ts
 export type SliceBuildOptions = {

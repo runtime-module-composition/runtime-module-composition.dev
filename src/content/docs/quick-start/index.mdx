@@ -1,0 +1,25 @@
+---
+title: Quick Start
+description: Get a host and one slice running locally, composed at runtime through import maps.
+---
+
+import { CardGrid, Card } from '@astrojs/starlight/components';
+
+Runtime Module Composition lets a single page be assembled from pieces built with entirely different frontend frameworks, each developed and deployed on its own. A host owns the page and the import map; each slice is an independently built ESM module the host resolves and mounts at runtime — nothing here requires every piece to share a framework, a build pipeline, or a release schedule.
+
+That capability is easiest to see by building it once. Pick a framework below for a focused walkthrough that gets a host and one slice running on your machine.
+
+<CardGrid>
+	<Card title={`<img src="/react-logo.svg" alt="" width="28" height="28" style="vertical-align: -0.4em; margin-right: 0.5rem;" /> React`}>
+		A React host mounting a React slice, in 11 steps.
+
+		[Start the React quick start →](/quick-start/react/)
+	</Card>
+	<Card title={`<img src="/vue-logo.svg" alt="" width="28" height="28" style="vertical-align: -0.4em; margin-right: 0.5rem;" /> Vue`}>
+		A Vue host mounting a Vue slice, in 11 steps.
+
+		[Start the Vue quick start →](/quick-start/vue/)
+	</Card>
+</CardGrid>
+
+Both walkthroughs build the same shape — a host that generates its own import map and a slice built and served completely independently of it — using each framework's own adapter and conventions. For the concepts behind either one, see [Technical Implementation](/technical-implementation/).
