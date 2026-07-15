@@ -29,6 +29,8 @@ export default defineConfig({
               label: "Technical Implementation",
               slug: "technical-implementation",
             },
+            { label: "Architecture Diagrams", slug: "architecture-diagrams" },
+            { label: "Glossary", slug: "glossary" },
           ],
         },
         {

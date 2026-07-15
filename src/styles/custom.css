@@ -15,3 +15,96 @@
 .hero img {
   filter: drop-shadow(0 24px 60px rgba(31, 94, 255, 0.22));
 }
+
+/* Architecture diagram SVGs — namespaced under .rmc-diagram so these short
+   class names (.t, .ts, .th, .arr, .box, .c-gray, .c-teal) can't collide
+   with anything else on the site. Light values first, dark overrides via
+   Starlight's actual toggle attribute (not prefers-color-scheme, since
+   Starlight's theme switch can differ from the OS setting). */
+.rmc-diagram {
+  margin: 1.5rem 0;
+}
+.rmc-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.rmc-diagram .t {
+  font: 400 14px var(--sl-font);
+  fill: #2c2c2a;
+}
+.rmc-diagram .ts {
+  font: 400 12px var(--sl-font);
+  fill: #5f5e5a;
+}
+.rmc-diagram .th {
+  font: 500 14px var(--sl-font);
+  fill: #2c2c2a;
+}
+.rmc-diagram .arr {
+  stroke: #5f5e5a;
+}
+.rmc-diagram .box {
+  fill: #f1efe8;
+  stroke: #5f5e5a;
+}
+.rmc-diagram .c-gray rect,
+.rmc-diagram .c-gray circle {
+  fill: #f1efe8;
+  stroke: #5f5e5a;
+}
+.rmc-diagram .c-gray .th,
+.rmc-diagram .c-gray .t {
+  fill: #444441;
+}
+.rmc-diagram .c-gray .ts {
+  fill: #5f5e5a;
+}
+.rmc-diagram .c-teal rect,
+.rmc-diagram .c-teal circle {
+  fill: #e1f5ee;
+  stroke: #0f6e56;
+}
+.rmc-diagram .c-teal .th,
+.rmc-diagram .c-teal .t {
+  fill: #085041;
+}
+.rmc-diagram .c-teal .ts {
+  fill: #0f6e56;
+}
+
+:root[data-theme="dark"] .rmc-diagram .t,
+:root[data-theme="dark"] .rmc-diagram .th {
+  fill: #f1efe8;
+}
+:root[data-theme="dark"] .rmc-diagram .ts {
+  fill: #d3d1c7;
+}
+:root[data-theme="dark"] .rmc-diagram .box,
+:root[data-theme="dark"] .rmc-diagram .c-gray rect,
+:root[data-theme="dark"] .rmc-diagram .c-gray circle {
+  fill: #444441;
+  stroke: #b4b2a9;
+}
+:root[data-theme="dark"] .rmc-diagram .c-gray .th,
+:root[data-theme="dark"] .rmc-diagram .c-gray .t {
+  fill: #d3d1c7;
+}
+:root[data-theme="dark"] .rmc-diagram .c-gray .ts {
+  fill: #b4b2a9;
+}
+:root[data-theme="dark"] .rmc-diagram .c-teal rect,
+:root[data-theme="dark"] .rmc-diagram .c-teal circle {
+  fill: #085041;
+  stroke: #5dcaa5;
+}
+:root[data-theme="dark"] .rmc-diagram .c-teal .th,
+:root[data-theme="dark"] .rmc-diagram .c-teal .t {
+  fill: #9fe1cb;
+}
+:root[data-theme="dark"] .rmc-diagram .c-teal .ts {
+  fill: #5dcaa5;
+}
+:root[data-theme="dark"] .rmc-diagram .arr {
+  stroke: #b4b2a9;
+}
