@@ -55,7 +55,7 @@ A [manifest](#manifest) field: the specifier prefix every slice is addressed und
 
 ### Route
 
-What `resolveRoute(manifest, path)` does: matches a URL path against the manifest to find which slice owns it. Returns a `RuntimeRouteMatch` — the slice's module specifier, its name, the matched route, and any path params.
+What `resolveRoute(manifest, path)` does: matches a URL path against the manifest to find which slice owns it. Returns a `RuntimeRouteMatch` — the slice's module specifier, its name, and the matched route pattern. Host routing is deliberately coarse (exact paths and `/prefix/*` wildcards, no path params) — everything after the matched prefix belongs to the slice's own router.
 
 ### Runtime Module Composition
 
