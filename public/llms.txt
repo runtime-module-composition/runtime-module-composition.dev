@@ -1,0 +1,20 @@
+# Runtime Module Composition
+
+> A browser-native pattern — and a small toolkit implementing it — for composing independently built and deployed frontend modules together at runtime, using native ES modules and import maps instead of a bundler-level build step.
+
+Runtime Module Composition (`rmc-toolkit`) needs almost no configuration: one manifest object drives import map generation, route resolution, and Vite build config together, so there's no separate integration layer to hand-maintain. Composition happens entirely through native browser behavior — a `<script type="importmap">` and a dynamic `import()` — not a custom module loader, iframes, or a bundler-specific runtime. Because shared dependencies (React, Vue, and so on) resolve through the import map instead of being bundled into each slice, a slice's build output stays small: only its own code, never a second copy of dependencies it shares with the host or other slices.
+
+## Docs
+
+- [Overview](/): what Runtime Module Composition is and the architecture model behind it
+- [Quick Start](/quick-start/): pick React or Vue and get a host plus one slice running locally
+- [Quick Start: React](/quick-start/react/): step by step, a React host mounting a React slice
+- [Quick Start: Vue](/quick-start/vue/): step by step, a Vue host mounting a Vue slice
+- [Technical Implementation](/technical-implementation/): the pattern itself, independent of any specific tooling
+- [Architecture Diagrams](/architecture-diagrams/): visual walkthroughs of the manifest, the host, and a slice, built around one worked example
+- [Glossary](/glossary/): definitions for every term used across these docs
+- [API Reference](/api-reference/): every exported method across all four packages, with usage examples
+
+## Optional
+
+- [Multi-Framework Demo](/demo/): a larger reference implementation composing React, Vue, and vanilla JS slices together

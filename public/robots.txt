@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://runtime-module-composition.dev/sitemap-index.xml
