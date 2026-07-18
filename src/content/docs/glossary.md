@@ -5,6 +5,8 @@ description: What each term means, in one place — manifest fields, runtime con
 
 Every other page in these docs assumes the terms below. This page defines them once, so nothing has to re-explain itself. Terms are alphabetical — use your browser's find-in-page, or search, to jump straight to one.
 
+## Runtime Module Composition terms
+
 ### Adapter
 
 A framework-specific wrapper around the core resolve/import/mount lifecycle — `@rmc-toolkit/react`'s `createReactAdapter()`/`createDynamicModuleBoundary()`, `@rmc-toolkit/vue`'s `createVueAdapter()`. Each is a factory: it takes the host's own already-resolved framework instance (`React`, `Vue`) as an argument, rather than importing one itself, so the adapter package never bundles a second, conflicting copy of the framework.

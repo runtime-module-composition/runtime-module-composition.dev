@@ -68,6 +68,7 @@ html[data-has-hero] .hero .copy {
 
 html[data-has-hero] .hero h1 {
   max-width: 12ch;
+  color: #fff;
   font-size: clamp(2.75rem, 6vw, 5.4rem);
   font-weight: 650;
   line-height: 0.98;
