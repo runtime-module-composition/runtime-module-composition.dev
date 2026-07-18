@@ -13,6 +13,36 @@ export default defineConfig({
         replacesTitle: true,
       },
       favicon: "/favicon.png",
+      head: [
+        {
+          tag: "meta",
+          attrs: {
+            property: "og:image",
+            content: "https://runtime-module-composition.dev/og.png",
+          },
+        },
+        {
+          tag: "meta",
+          attrs: {
+            property: "og:image:width",
+            content: "1200",
+          },
+        },
+        {
+          tag: "meta",
+          attrs: {
+            property: "og:image:height",
+            content: "630",
+          },
+        },
+        {
+          tag: "meta",
+          attrs: {
+            name: "twitter:image",
+            content: "https://runtime-module-composition.dev/og.png",
+          },
+        },
+      ],
       social: [
         {
           icon: "github",

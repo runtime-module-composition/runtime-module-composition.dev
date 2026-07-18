@@ -1,19 +1,195 @@
 :root {
   --sl-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  --sl-color-accent-low: #d8ecff;
-  --sl-color-accent: #1f5eff;
-  --sl-color-accent-high: #182f73;
+  --sl-color-accent-low: #dcecff;
+  --sl-color-accent: #2563eb;
+  --sl-color-accent-high: #172d68;
+  --rmc-radius-lg: 1.25rem;
+  --rmc-shadow: 0 24px 70px rgba(12, 36, 79, 0.12);
 }
 
 :root[data-theme="dark"] {
-  --sl-color-accent-low: #10275a;
-  --sl-color-accent: #75b7ff;
+  --sl-color-accent-low: #0c2758;
+  --sl-color-accent: #7abaff;
   --sl-color-accent-high: #d8ecff;
+  --rmc-shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
 }
 
-.hero img {
-  filter: drop-shadow(0 24px 60px rgba(31, 94, 255, 0.22));
+/* Give the navigation a quieter, more tactile surface. */
+.page > .header {
+  background-color: color-mix(in srgb, var(--sl-color-bg-nav) 88%, transparent);
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--sl-color-hairline-shade) 72%,
+    transparent
+  );
+  backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* Homepage hero */
+html[data-has-hero] .hero {
+  position: relative;
+  isolation: isolate;
+  min-height: clamp(29rem, 66vh, 44rem);
+  margin-block: clamp(0.75rem, 2vw, 1.5rem) clamp(3rem, 7vw, 5.5rem);
+  padding: clamp(2rem, 5vw, 5rem);
+  overflow: hidden;
+  border: 1px solid rgba(128, 190, 255, 0.17);
+  border-radius: var(--rmc-radius-lg);
+  background:
+    linear-gradient(90deg, rgba(2, 12, 31, 0.98) 0%, rgba(3, 15, 38, 0.9) 40%, rgba(3, 15, 38, 0.25) 75%),
+    linear-gradient(0deg, rgba(2, 10, 26, 0.22), rgba(2, 10, 26, 0.22)),
+    url("/images/runtime-modules-hero.webp") center / cover no-repeat;
+  box-shadow: var(--rmc-shadow);
+}
+
+html[data-has-hero] .hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: auto 8% -30% auto;
+  width: 22rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(32, 129, 255, 0.18);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+html[data-has-hero] .hero .stack {
+  position: relative;
+  z-index: 1;
+  max-width: 47rem;
+}
+
+html[data-has-hero] .hero .copy {
+  gap: 1.25rem;
+}
+
+html[data-has-hero] .hero h1 {
+  max-width: 12ch;
+  font-size: clamp(2.75rem, 6vw, 5.4rem);
+  font-weight: 650;
+  line-height: 0.98;
+  letter-spacing: -0.052em;
+  text-wrap: balance;
+}
+
+html[data-has-hero] .hero h1::before {
+  content: "BROWSER-NATIVE ARCHITECTURE";
+  display: block;
+  width: max-content;
+  margin-bottom: 1rem;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid rgba(138, 199, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(83, 157, 255, 0.1);
+  color: #9bcbff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+}
+
+html[data-has-hero] .hero .tagline {
+  max-width: 43rem;
+  color: rgba(229, 240, 255, 0.78);
+  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+html[data-has-hero] .hero .actions {
+  gap: 0.75rem;
+}
+
+html[data-has-hero] .hero .sl-link-button {
+  min-height: 3rem;
+  border-color: rgba(186, 219, 255, 0.3);
+  border-radius: 0.7rem;
+  padding-inline: 1.2rem;
+  font-weight: 650;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+html[data-has-hero] .hero .sl-link-button:hover {
+  transform: translateY(-2px);
+}
+
+html[data-has-hero] .hero .sl-link-button.primary {
+  border-color: #70b3ff;
+  background: #eaf4ff;
+  color: #06162d;
+  box-shadow: 0 10px 30px rgba(45, 142, 255, 0.24);
+}
+
+html[data-has-hero] .hero .sl-link-button.secondary {
+  background: rgba(7, 29, 62, 0.44);
+  color: #eef7ff;
+  backdrop-filter: blur(8px);
+}
+
+html[data-has-hero] .hero .sl-link-button.secondary:hover {
+  border-color: rgba(186, 219, 255, 0.62);
+  background: rgba(14, 47, 91, 0.64);
+}
+
+/* More deliberate rhythm for the homepage narrative. */
+html[data-has-hero] .sl-markdown-content {
+  max-width: 54rem;
+  margin-inline: auto;
+  font-size: 1.04rem;
+  line-height: 1.78;
+}
+
+html[data-has-hero] .sl-markdown-content > p:first-child {
+  color: var(--sl-color-white);
+  font-size: clamp(1.18rem, 1.6vw, 1.38rem);
+  line-height: 1.65;
+  letter-spacing: -0.012em;
+}
+
+html[data-has-hero] .sl-markdown-content h2 {
+  margin-top: clamp(3.25rem, 7vw, 5rem);
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--sl-color-hairline-light);
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  letter-spacing: -0.032em;
+}
+
+html[data-has-hero] .sl-markdown-content li {
+  padding-inline-start: 0.25rem;
+}
+
+html[data-has-hero] .sl-markdown-content li::marker {
+  color: var(--sl-color-text-accent);
+  font-weight: 700;
+}
+
+html[data-has-hero] .sl-markdown-content code {
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.35rem;
+}
+
+@media (max-width: 49.99rem) {
+  html[data-has-hero] .hero {
+    min-height: 35rem;
+    background-position: 62% center;
+  }
+
+  html[data-has-hero] .hero h1::before {
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-has-hero] .hero .sl-link-button {
+    transition: none;
+  }
 }
 
 /* Architecture diagram SVGs — namespaced under .rmc-diagram so these short
