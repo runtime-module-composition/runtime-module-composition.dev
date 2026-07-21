@@ -75,10 +75,11 @@ None of these is more correct than the others — a slice genuinely is all three
 
 ### Slice conventions
 
-A slice is built for exactly one of two contracts, and they aren't interchangeable:
+A slice is built for exactly one of three contracts, and they aren't interchangeable:
 
 - **mount/unmount** — the slice exports an object with `mount(target)` and `unmount()`. Used by `createRuntimeHost()`, `createReactAdapter()`, and `createVueAdapter()`.
 - **plain component** — the slice default-exports a component. Used by React's `createDynamicModuleBoundary()`.
+- **injected component** — the slice default-exports a factory, `(deps) => Component`, that receives the host's own framework instance instead of importing its own. Used by `createInjectedModuleBoundary()` (React and Vue). This one has a narrow, specific purpose — see [Migrating an Existing App](/quick-start/migrating/) for when to reach for it instead of the other two.
 
 Pick the one matching how a given slice is written — not both for the same slice.
 

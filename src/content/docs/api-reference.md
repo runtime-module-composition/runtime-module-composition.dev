@@ -624,6 +624,41 @@ Notes:
 - Built on `React.lazy()` and `React.Suspense`, using `importModule()` internally.
 - An internal error boundary catches both import failures and render failures.
 
+### `createInjectedModuleBoundary(React, extraDeps?)`
+
+For slices that need the *host's own* React instance — not a separately import-map-resolved copy — because they call hooks. See [Migrating an Existing App](/quick-start/migrating/) for when this applies instead of `createDynamicModuleBoundary`.
+
+```ts
+function createInjectedModuleBoundary<TExtraDeps extends object = {}>(
+  React: typeof React,
+  extraDeps?: TExtraDeps,
+): { InjectedModuleBoundary: (props: InjectedModuleBoundaryProps) => ReactElement };
+
+type InjectedModuleBoundaryProps = {
+  specifier: string;
+  context?: RuntimeModuleContext;
+  fallback?: ReactNode;
+  errorFallback?: ReactNode;
+  importer?: DynamicImporter;
+};
+```
+
+A slice built for this convention default-exports a factory instead of a ready component:
+
+```tsx
+export default (deps) => {
+  const { React } = deps;
+  return () => {
+    React.useEffect(() => {
+      /* ... */
+    }, []);
+    return React.createElement("h1", null, "Hello");
+  };
+};
+```
+
+`extraDeps` is merged into `{ React, ...extraDeps }` once, when `createInjectedModuleBoundary` itself is called — not per render, and not a prop on `InjectedModuleBoundary`. Every slice rendered through the resulting boundary receives that same fixed object.
+
 ## Vue adapter (`@rmc-toolkit/vue`)
 
 ### `createVueAdapter(Vue)`
@@ -677,6 +712,41 @@ export default {
 ```
 
 Internally: `useRuntimeHost` creates one `createRuntimeHostObservable` in `onMounted` (once `target.value` is available), subscribes it to a reactive `status` ref, calls `observable.next()` once immediately and again on every reactive change to `path()` via `watch()`, and calls `observable.destroy()` in `onUnmounted`.
+
+### `createInjectedModuleBoundary(Vue, extraDeps?)`
+
+The Vue equivalent of the React adapter's `createInjectedModuleBoundary` — same purpose, same fixed-once `deps` rule. See [Migrating an Existing App](/quick-start/migrating/) for when this applies.
+
+```ts
+function createInjectedModuleBoundary<TExtraDeps extends object = {}>(
+  Vue: typeof Vue,
+  extraDeps?: TExtraDeps,
+): { InjectedModuleBoundary: Component<InjectedModuleBoundaryProps> };
+
+type InjectedModuleBoundaryProps = {
+  specifier: string;
+  context?: RuntimeModuleContext;
+  fallback?: Component;
+  errorFallback?: Component;
+  importer?: DynamicImporter;
+};
+```
+
+```ts
+export default (deps) => {
+  const { Vue } = deps;
+  return {
+    setup() {
+      Vue.onMounted(() => {
+        /* ... */
+      });
+      return () => Vue.h("h1", null, "Hello");
+    },
+  };
+};
+```
+
+`InjectedModuleBoundary` is an actual Vue component (`<InjectedModuleBoundary specifier="..." />`), not a composable — unlike `createVueAdapter`'s `useRuntimeHost`.
 
 ## Recommended order
 
