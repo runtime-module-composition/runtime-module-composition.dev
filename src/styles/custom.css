@@ -218,6 +218,16 @@ html[data-has-hero] .sl-markdown-content code {
   font: 500 14px var(--sl-font);
   fill: #2c2c2a;
 }
+.rmc-diagram .tm {
+  font: 500 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  fill: #2c2c2a;
+}
+.rmc-diagram .eyebrow {
+  font: 700 11px var(--sl-font);
+  letter-spacing: 0.075em;
+  fill: #444441;
+}
 .rmc-diagram .arr {
   stroke: #5f5e5a;
 }
@@ -231,7 +241,9 @@ html[data-has-hero] .sl-markdown-content code {
   stroke: #5f5e5a;
 }
 .rmc-diagram .c-gray .th,
-.rmc-diagram .c-gray .t {
+.rmc-diagram .c-gray .t,
+.rmc-diagram .c-gray .tm,
+.rmc-diagram .c-gray .eyebrow {
   fill: #444441;
 }
 .rmc-diagram .c-gray .ts {
@@ -243,15 +255,54 @@ html[data-has-hero] .sl-markdown-content code {
   stroke: #0f6e56;
 }
 .rmc-diagram .c-teal .th,
-.rmc-diagram .c-teal .t {
+.rmc-diagram .c-teal .t,
+.rmc-diagram .c-teal .tm,
+.rmc-diagram .c-teal .eyebrow {
   fill: #085041;
 }
 .rmc-diagram .c-teal .ts {
   fill: #0f6e56;
 }
+.rmc-diagram .browser-shell > rect:first-child {
+  fill: #fafaf8;
+  stroke: #8a8880;
+}
+.rmc-diagram .browser-shell circle {
+  fill: #999892;
+}
+.rmc-diagram .browser-chrome {
+  fill: #f1efe8;
+  stroke: #b4b2a9;
+}
+.rmc-diagram .address,
+.rmc-diagram .browser-input {
+  fill: #fff;
+  stroke: #d3d1c7;
+}
+.rmc-diagram .browser-host {
+  fill: #fff;
+  stroke: #d3d1c7;
+}
+.rmc-diagram .browser-layer {
+  fill: #f5f6f8;
+  stroke: #b4b2a9;
+}
+.rmc-diagram .browser-result {
+  fill: #e1f5ee;
+  stroke: #0f6e56;
+}
+.rmc-diagram .browser-button {
+  fill: #dcecff;
+  stroke: #2563eb;
+}
+.rmc-diagram .browser-muted {
+  fill: #77756f;
+}
 
 :root[data-theme="dark"] .rmc-diagram .t,
-:root[data-theme="dark"] .rmc-diagram .th {
+:root[data-theme="dark"] .rmc-diagram .th,
+:root[data-theme="dark"] .rmc-diagram .tm,
+:root[data-theme="dark"] .rmc-diagram .eyebrow {
   fill: #f1efe8;
 }
 :root[data-theme="dark"] .rmc-diagram .ts {
@@ -264,7 +315,9 @@ html[data-has-hero] .sl-markdown-content code {
   stroke: #b4b2a9;
 }
 :root[data-theme="dark"] .rmc-diagram .c-gray .th,
-:root[data-theme="dark"] .rmc-diagram .c-gray .t {
+:root[data-theme="dark"] .rmc-diagram .c-gray .t,
+:root[data-theme="dark"] .rmc-diagram .c-gray .tm,
+:root[data-theme="dark"] .rmc-diagram .c-gray .eyebrow {
   fill: #d3d1c7;
 }
 :root[data-theme="dark"] .rmc-diagram .c-gray .ts {
@@ -276,7 +329,9 @@ html[data-has-hero] .sl-markdown-content code {
   stroke: #5dcaa5;
 }
 :root[data-theme="dark"] .rmc-diagram .c-teal .th,
-:root[data-theme="dark"] .rmc-diagram .c-teal .t {
+:root[data-theme="dark"] .rmc-diagram .c-teal .t,
+:root[data-theme="dark"] .rmc-diagram .c-teal .tm,
+:root[data-theme="dark"] .rmc-diagram .c-teal .eyebrow {
   fill: #9fe1cb;
 }
 :root[data-theme="dark"] .rmc-diagram .c-teal .ts {
@@ -284,4 +339,46 @@ html[data-has-hero] .sl-markdown-content code {
 }
 :root[data-theme="dark"] .rmc-diagram .arr {
   stroke: #b4b2a9;
+}
+:root[data-theme="dark"] .rmc-diagram .browser-shell > rect:first-child {
+  fill: #171817;
+  stroke: #b4b2a9;
+}
+:root[data-theme="dark"] .rmc-diagram .browser-chrome {
+  fill: #2c2d2b;
+  stroke: #77756f;
+}
+:root[data-theme="dark"] .rmc-diagram .address,
+:root[data-theme="dark"] .rmc-diagram .browser-input,
+:root[data-theme="dark"] .rmc-diagram .browser-host {
+  fill: #222321;
+  stroke: #77756f;
+}
+:root[data-theme="dark"] .rmc-diagram .browser-layer {
+  fill: #272927;
+  stroke: #77756f;
+}
+:root[data-theme="dark"] .rmc-diagram .browser-result {
+  fill: #085041;
+  stroke: #5dcaa5;
+}
+:root[data-theme="dark"] .rmc-diagram .browser-button {
+  fill: #0c2758;
+  stroke: #7abaff;
+}
+:root[data-theme="dark"] .rmc-diagram .browser-muted {
+  fill: #b4b2a9;
+}
+
+@media (max-width: 50rem) {
+  .rmc-diagram {
+    margin-inline: -0.5rem;
+    padding: 0.5rem;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .rmc-diagram svg {
+    min-width: 48rem;
+  }
 }
