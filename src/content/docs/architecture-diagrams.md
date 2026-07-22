@@ -21,7 +21,6 @@ The toolkit is held together by five mechanisms. They contribute different thing
 <title>Five RMC Toolkit mechanisms converging in the browser</title>
 <desc>Manifest, import-map, build, runtime composition, and framework bridge mechanisms feed specific layers of a browser that renders one composed FastFlights application.</desc>
 <defs><marker id="overview-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-
 <g class="c-gray">
   <rect x="350" y="20" width="260" height="76" rx="12"/>
   <text class="eyebrow" x="480" y="44" text-anchor="middle">MANIFEST CONTRACT</text>
@@ -51,35 +50,29 @@ The toolkit is held together by five mechanisms. They contribute different thing
   <text class="tm" x="815" y="437" text-anchor="middle">createReactAdapter(React)</text>
   <text class="ts" x="815" y="457" text-anchor="middle">Host lifecycle integration</text>
 </g>
-
 <line x1="480" y1="96" x2="480" y2="126" class="arr" marker-end="url(#overview-arrow)"/>
 <line x1="270" y1="213" x2="310" y2="213" class="arr" marker-end="url(#overview-arrow)"/>
 <line x1="270" y1="429" x2="310" y2="429" class="arr" marker-end="url(#overview-arrow)"/>
 <line x1="690" y1="213" x2="650" y2="213" class="arr" marker-end="url(#overview-arrow)"/>
 <line x1="690" y1="429" x2="650" y2="429" class="arr" marker-end="url(#overview-arrow)"/>
-
 <g class="browser-shell">
   <rect x="310" y="126" width="340" height="450" rx="16"/>
   <rect class="browser-chrome" x="310" y="126" width="340" height="48" rx="16"/>
   <circle cx="330" cy="150" r="5"/><circle cx="347" cy="150" r="5"/><circle cx="364" cy="150" r="5"/>
   <rect class="address" x="382" y="138" width="250" height="24" rx="7"/>
   <text class="tm browser-muted" x="396" y="154">fastflights.com/search</text>
-
   <text class="eyebrow" x="334" y="204">DOCUMENT / HEAD</text>
   <rect class="browser-layer" x="330" y="216" width="300" height="58" rx="9"/>
   <text class="tm" x="480" y="240" text-anchor="middle">&lt;script type="importmap"&gt;</text>
   <text class="ts" x="480" y="260" text-anchor="middle">stable keys → remote module URLs</text>
-
   <text class="eyebrow" x="334" y="304">NATIVE MODULE GRAPH</text>
   <rect class="browser-layer" x="330" y="316" width="300" height="58" rx="9"/>
   <text class="tm" x="480" y="340" text-anchor="middle">import(match.specifier)</text>
   <text class="ts" x="480" y="360" text-anchor="middle">fetch + evaluate ESM</text>
-
   <text class="eyebrow" x="334" y="404">RUNTIME MOUNT BOUNDARY</text>
   <rect class="browser-layer" x="330" y="416" width="300" height="58" rx="9"/>
   <text class="tm" x="480" y="440" text-anchor="middle">runtimeModule.mount(target, context)</text>
   <text class="ts" x="480" y="460" text-anchor="middle">loading · ready · error · cleanup</text>
-
   <rect class="browser-result" x="330" y="500" width="300" height="52" rx="9"/>
   <text class="th" x="480" y="522" text-anchor="middle">One composed FastFlights application</text>
   <text class="ts" x="480" y="542" text-anchor="middle">Host shell + mounted Search slice</text>
@@ -98,7 +91,6 @@ The toolkit is held together by five mechanisms. They contribute different thing
 <title>Manifest values derive matching module identifiers and URLs</title>
 <desc>The namespace, slice name, entry file, and assets origin derive the resolved module specifier, remote module URL, and build artifact for the search slice.</desc>
 <defs><marker id="manifest-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-
 <g class="c-gray">
   <rect x="70" y="40" width="820" height="112" rx="12"/>
   <text class="eyebrow" x="100" y="68">MANIFEST INPUT</text>
@@ -106,10 +98,8 @@ The toolkit is held together by five mechanisms. They contribute different thing
   <text class="tm" x="100" y="118">  assetsOrigin: "https://assets.fastflights.com", entryFile: "index.mjs" &#125;)</text>
   <text class="tm" x="100" y="140">sliceName = "search"</text>
 </g>
-
 <line x1="480" y1="152" x2="480" y2="195" class="arr" marker-end="url(#manifest-arrow)"/>
 <text class="ts" x="500" y="180">same values, three derived contracts</text>
-
 <g class="c-teal">
   <rect x="40" y="210" width="280" height="126" rx="12"/>
   <text class="eyebrow" x="180" y="238" text-anchor="middle">ROUTE / IMPORT IDENTITY</text>
@@ -130,11 +120,9 @@ The toolkit is held together by five mechanisms. They contribute different thing
   <text class="ts" x="780" y="265" text-anchor="middle">dist + sliceName + entryFile</text>
   <text class="tm" x="780" y="305" text-anchor="middle">dist/search/index.mjs</text>
 </g>
-
 <line x1="180" y1="336" x2="420" y2="420" class="arr" marker-end="url(#manifest-arrow)"/>
 <line x1="480" y1="336" x2="480" y2="420" class="arr" marker-end="url(#manifest-arrow)"/>
 <line x1="780" y1="336" x2="540" y2="420" class="arr" marker-end="url(#manifest-arrow)"/>
-
 <g class="c-teal">
   <rect x="250" y="420" width="460" height="100" rx="12"/>
   <text class="eyebrow" x="480" y="450" text-anchor="middle">PROTECTED INVARIANT</text>
@@ -155,14 +143,12 @@ The browser receives an import map before any dependent module executes. Applica
 <title>Import-map prefix and exact-key resolution</title>
 <desc>The application prefix @fastflights maps to the asset origin and resolves the search module specifier, while the exact dependency key @esm.sh/react maps to a pinned esm.sh URL.</desc>
 <defs><marker id="map-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-
 <g class="c-gray">
   <rect x="100" y="30" width="760" height="108" rx="12"/>
   <text class="eyebrow" x="130" y="58">BROWSER DOCUMENT / &lt;HEAD&gt;</text>
   <text class="tm" x="130" y="84">&lt;script type="importmap"&gt;</text>
   <text class="tm" x="130" y="110">&#123; "imports": &#123; "@fastflights/": "https://assets.fastflights.com/", ... &#125; &#125;</text>
 </g>
-
 <text class="eyebrow" x="235" y="185" text-anchor="middle">APPLICATION PREFIX MAPPING</text>
 <g class="c-gray">
   <rect x="40" y="205" width="390" height="76" rx="10"/>
@@ -176,7 +162,6 @@ The browser receives an import map before any dependent module executes. Applica
   <text class="ts" x="235" y="377" text-anchor="middle">+ remainder: "search/index.mjs"</text>
   <text class="tm" x="235" y="405" text-anchor="middle">https://assets.fastflights.com/search/index.mjs</text>
 </g>
-
 <text class="eyebrow" x="725" y="185" text-anchor="middle">EXACT DEPENDENCY MAPPING</text>
 <g class="c-gray">
   <rect x="530" y="205" width="390" height="76" rx="10"/>
@@ -190,7 +175,6 @@ The browser receives an import map before any dependent module executes. Applica
   <text class="ts" x="725" y="377" text-anchor="middle">exact key — version stays out of application code</text>
   <text class="tm" x="725" y="405" text-anchor="middle">https://esm.sh/react@19.2.7</text>
 </g>
-
 <line x1="235" y1="429" x2="420" y2="510" class="arr" marker-end="url(#map-arrow)"/>
 <line x1="725" y1="429" x2="540" y2="510" class="arr" marker-end="url(#map-arrow)"/>
 <g class="browser-shell">
@@ -213,7 +197,6 @@ The slice build has two responsibilities: produce the ESM artifact at the path t
 <title>Slice build output and dependency externalization</title>
 <desc>defineSliceBuild emits dist/search/index.mjs, while createRollupExternal preserves the @esm.sh/react import in that artifact for the browser import map.</desc>
 <defs><marker id="build-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-
 <text class="eyebrow" x="245" y="48" text-anchor="middle">ARTIFACT PATH</text>
 <g class="c-gray">
   <rect x="40" y="66" width="410" height="80" rx="10"/>
@@ -227,7 +210,6 @@ The slice build has two responsibilities: produce the ESM artifact at the path t
   <text class="tm" x="245" y="246" text-anchor="middle">fileName: () =&gt; "index.mjs"</text>
   <text class="th" x="245" y="270" text-anchor="middle">→ dist/search/index.mjs</text>
 </g>
-
 <text class="eyebrow" x="715" y="48" text-anchor="middle">DEPENDENCY EXTERNALIZATION</text>
 <g class="c-gray">
   <rect x="510" y="66" width="410" height="80" rx="10"/>
@@ -241,7 +223,6 @@ The slice build has two responsibilities: produce the ESM artifact at the path t
   <text class="tm" x="715" y="246" text-anchor="middle">("@esm.sh/react") → true</text>
   <text class="th" x="715" y="270" text-anchor="middle">→ import stays in the emitted ESM</text>
 </g>
-
 <line x1="245" y1="284" x2="420" y2="370" class="arr" marker-end="url(#build-arrow)"/>
 <line x1="715" y1="284" x2="540" y2="370" class="arr" marker-end="url(#build-arrow)"/>
 <g class="c-teal">
@@ -270,28 +251,20 @@ The slice build has two responsibilities: produce the ESM artifact at the path t
 <title>Explicit runtime flow from URL path to mounted module</title>
 <desc>The URL path search is resolved to the module specifier @fastflights/search/index.mjs. Dynamic import passes that specifier to the browser, which resolves it through the import map to the asset URL, fetches and evaluates it, unwraps the runtime module, and mounts it into the target.</desc>
 <defs><marker id="runtime-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-
 <g class="c-gray"><rect x="130" y="30" width="700" height="76" rx="11"/><text class="eyebrow" x="160" y="56">URL PATH</text><text class="tm" x="160" y="84">"/search"</text></g>
 <line x1="480" y1="106" x2="480" y2="138" class="arr" marker-end="url(#runtime-arrow)"/>
-
 <g class="c-gray"><rect x="130" y="138" width="700" height="88" rx="11"/><text class="eyebrow" x="160" y="164">ROUTE RESOLUTION</text><text class="tm" x="160" y="194">const match = resolveRoute(manifest, "/search")</text><text class="ts" x="160" y="214">Returns a RuntimeRouteMatch — not a URL</text></g>
 <line x1="480" y1="226" x2="480" y2="258" class="arr" marker-end="url(#runtime-arrow)"/>
-
 <g class="c-teal"><rect x="130" y="258" width="700" height="88" rx="11"/><text class="eyebrow" x="160" y="284">RESOLVED MODULE SPECIFIER</text><text class="tm" x="160" y="316">match.specifier = "@fastflights/search/index.mjs"</text><text class="ts" x="160" y="336">This exact string is passed unchanged to import()</text></g>
 <line x1="480" y1="346" x2="480" y2="378" class="arr" marker-end="url(#runtime-arrow)"/>
-
 <g class="c-teal"><rect x="130" y="378" width="700" height="76" rx="11"/><text class="eyebrow" x="160" y="404">DYNAMIC IMPORT</text><text class="tm" x="160" y="432">const moduleNamespace = await import(match.specifier)</text></g>
 <line x1="480" y1="454" x2="480" y2="486" class="arr" marker-end="url(#runtime-arrow)"/>
-
 <g class="c-teal"><rect x="130" y="486" width="700" height="100" rx="11"/><text class="eyebrow" x="160" y="512">BROWSER IMPORT-MAP RESOLUTION</text><text class="tm" x="160" y="542">"@fastflights/" → "https://assets.fastflights.com/"</text><text class="tm" x="160" y="568">+ remainder: "search/index.mjs"</text></g>
 <line x1="480" y1="586" x2="480" y2="618" class="arr" marker-end="url(#runtime-arrow)"/>
-
 <g class="c-teal"><rect x="130" y="618" width="700" height="88" rx="11"/><text class="eyebrow" x="160" y="644">RESOLVED MODULE URL</text><text class="tm" x="160" y="674">https://assets.fastflights.com/search/index.mjs</text><text class="ts" x="160" y="694">Browser fetches and evaluates this ESM resource</text></g>
 <line x1="480" y1="706" x2="480" y2="738" class="arr" marker-end="url(#runtime-arrow)"/>
-
 <g class="c-gray"><rect x="130" y="738" width="700" height="64" rx="11"/><text class="eyebrow" x="160" y="764">RUNTIME MODULE</text><text class="tm" x="160" y="788">const runtimeModule = moduleNamespace.default</text></g>
 <line x1="480" y1="802" x2="480" y2="834" class="arr" marker-end="url(#runtime-arrow)"/>
-
 <g class="c-teal"><rect x="130" y="834" width="700" height="56" rx="11"/><text class="eyebrow" x="160" y="858">MOUNT</text><text class="tm" x="300" y="858">await runtimeModule.mount(target, &#123; route: match, manifest &#125;)</text></g>
 </svg>
 </div>
@@ -316,21 +289,18 @@ The framework adapters do not change module resolution. They connect `createRunt
 <title>Framework bridge integration models</title>
 <desc>The DOM lifecycle adapters connect a framework host to a target element and mount-unmount runtime modules. The React DynamicModuleBoundary instead renders a default-exported React component directly inside the host React tree.</desc>
 <defs><marker id="framework-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-
 <text class="eyebrow" x="245" y="48" text-anchor="middle">DOM LIFECYCLE MODEL</text>
 <g class="c-gray"><rect x="40" y="66" width="410" height="100" rx="11"/><text class="tm" x="65" y="98">const &#123; useRuntimeHost &#125; =</text><text class="tm" x="65" y="122">  createReactAdapter(React)</text><text class="ts" x="65" y="148">Vue uses createVueAdapter(Vue) with the same runtime host</text></g>
 <line x1="245" y1="166" x2="245" y2="202" class="arr" marker-end="url(#framework-arrow)"/>
 <g class="c-teal"><rect x="40" y="202" width="410" height="112" rx="11"/><text class="tm" x="65" y="234">const &#123; ref, status &#125; =</text><text class="tm" x="65" y="258">  useRuntimeHost(path, &#123; manifest &#125;)</text><text class="tm" x="65" y="286">&lt;main ref=&#123;ref&#125; /&gt;</text><text class="ts" x="65" y="304">status: idle · loading · ready · error</text></g>
 <line x1="245" y1="314" x2="245" y2="350" class="arr" marker-end="url(#framework-arrow)"/>
 <g class="c-teal"><rect x="40" y="350" width="410" height="92" rx="11"/><text class="eyebrow" x="65" y="378">RUNTIME MODULE CONTRACT</text><text class="tm" x="65" y="408">mount(target, context) · unmount()</text><text class="ts" x="65" y="430">Host controls the target and observes lifecycle state</text></g>
-
 <text class="eyebrow" x="715" y="48" text-anchor="middle">REACT COMPONENT MODEL</text>
 <g class="c-gray"><rect x="510" y="66" width="410" height="100" rx="11"/><text class="tm" x="535" y="98">const &#123; DynamicModuleBoundary &#125; =</text><text class="tm" x="535" y="122">  createDynamicModuleBoundary(React)</text><text class="ts" x="535" y="148">Factory closes over the host's existing React instance</text></g>
 <line x1="715" y1="166" x2="715" y2="202" class="arr" marker-end="url(#framework-arrow)"/>
 <g class="c-teal"><rect x="510" y="202" width="410" height="112" rx="11"/><text class="tm" x="535" y="234">&lt;DynamicModuleBoundary</text><text class="tm" x="535" y="258">  specifier=&#123;match.specifier&#125;</text><text class="tm" x="535" y="282">  context=&#123;&#123; route: match, manifest &#125;&#125; /&gt;</text><text class="ts" x="535" y="304">React.lazy + Suspense + error boundary</text></g>
 <line x1="715" y1="314" x2="715" y2="350" class="arr" marker-end="url(#framework-arrow)"/>
 <g class="c-teal"><rect x="510" y="350" width="410" height="92" rx="11"/><text class="eyebrow" x="535" y="378">COMPONENT EXPORT CONTRACT</text><text class="tm" x="535" y="408">export default function SearchSlice()</text><text class="ts" x="535" y="430">Rendered directly inside the host React tree</text></g>
-
 <line x1="245" y1="442" x2="420" y2="510" class="arr" marker-end="url(#framework-arrow)"/>
 <line x1="715" y1="442" x2="540" y2="510" class="arr" marker-end="url(#framework-arrow)"/>
 <g class="browser-shell"><rect x="290" y="510" width="380" height="120" rx="14"/><rect class="browser-chrome" x="290" y="510" width="380" height="34" rx="14"/><text class="eyebrow" x="480" y="574" text-anchor="middle">SHARED ARCHITECTURAL OUTCOME</text><text class="th" x="480" y="600" text-anchor="middle">One browser document · one shared module graph</text><text class="ts" x="480" y="620" text-anchor="middle">A host-controlled composition boundary with explicit lifecycle</text></g>
@@ -351,19 +321,15 @@ The mechanisms disappear into the final product. The browser owns native module 
   <circle cx="146" cy="65" r="6"/><circle cx="166" cy="65" r="6"/><circle cx="186" cy="65" r="6"/>
   <rect class="address" x="214" y="50" width="600" height="30" rx="8"/>
   <text class="tm browser-muted" x="232" y="70">https://fastflights.com/search</text>
-
   <rect class="browser-host" x="120" y="94" width="720" height="62"/>
   <text class="th" x="150" y="132">FastFlights</text>
   <text class="eyebrow" x="810" y="132" text-anchor="end">HOST SHELL · ROUTER · PROVIDERS</text>
-
   <rect class="browser-layer" x="150" y="180" width="660" height="58" rx="10"/>
   <text class="eyebrow" x="174" y="204">BROWSER MODULE RESOLUTION</text>
   <text class="tm" x="174" y="226">@fastflights/search/index.mjs → https://assets.fastflights.com/search/index.mjs</text>
-
   <rect class="browser-layer" x="150" y="258" width="660" height="58" rx="10"/>
   <text class="eyebrow" x="174" y="282">SHARED MODULE GRAPH</text>
   <text class="tm" x="174" y="304">@esm.sh/react → https://esm.sh/react@19.2.7</text>
-
   <rect class="browser-result" x="150" y="340" width="660" height="176" rx="12"/>
   <text class="eyebrow" x="174" y="370">RUNTIME MOUNT TARGET</text>
   <text class="th" x="174" y="404">Search flights</text>
