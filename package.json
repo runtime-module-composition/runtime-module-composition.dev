@@ -7,11 +7,16 @@
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
     "postbuild": "node scripts/prepare-sites-build.mjs",
-    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview"
+    "preview": "npm run build && wrangler dev",
+    "generate-types": "wrangler types",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^14.1.4",
     "@astrojs/starlight": "latest",
     "astro": "latest"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "wrangler": "^4.113.0"
+  }
 }

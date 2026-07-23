@@ -1,8 +1,11 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 
+import cloudflare from "@astrojs/cloudflare";
+
 export default defineConfig({
   site: "https://runtime-module-composition.dev",
+
   integrations: [
     starlight({
       title: "Runtime Module Composition",
@@ -86,4 +89,6 @@ export default defineConfig({
       },
     }),
   ],
+
+  adapter: cloudflare(),
 });
