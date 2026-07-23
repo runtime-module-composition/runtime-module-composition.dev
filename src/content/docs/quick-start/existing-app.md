@@ -11,59 +11,11 @@ That piece doesn't have to be heading toward a larger migration. A panel that ch
 
 A slice built for the plain-component or mount/unmount conventions is expected to bring its own React or Vue, typically resolved through the import map (`@esm.sh/react`). That's fine for a slice with no hooks or reactive state. It breaks the moment the slice calls `React.useEffect` or uses a Vue `ref` — those look up state that lives inside the *specific* React or Vue module instance driving the render, and an already-bundled host's own copy is a different module instance than whatever the slice fetched separately.
 
-`createInjectedModuleBoundary` solves this the direct way: the slice doesn't import React or Vue at all. It default-exports a factory that *receives* the host's own instance as an argument.
-
-## The slice's shape
-
-Instead of a ready component, the slice exports a factory:
-
-```tsx
-export default (deps) => {
-  const { React } = deps;
-
-  return () => {
-    React.useEffect(() => {
-      console.log("mounted with the host's own React");
-    }, []);
-
-    return React.createElement("h1", null, "Hello");
-  };
-};
-```
+`createInjectedModuleBoundary` solves this the direct way: the slice doesn't import React or Vue at all. It default-exports a factory that *receives* the host's own instance as an argument. (That's the slice author's side of the contract — if you're the one building the slice rather than integrating it into a host, see the [API Reference](/api-reference/#createinjectedmoduleboundaryreact-extradeps) for its exact shape.)
 
 ## Wiring it into your existing app
 
-In your existing, already-bundled host:
-
-```tsx
-import React from "react";
-import { createInjectedModuleBoundary } from "@rmc-toolkit/react";
-
-const { InjectedModuleBoundary } = createInjectedModuleBoundary(React);
-```
-
-```tsx
-<InjectedModuleBoundary specifier="@fastflights/hello/index.mjs" />
-```
-
-That's the entire integration. `specifier` still resolves through the import map exactly the way any other slice does — the only difference is what happens once the module is loaded: instead of treating the loaded value as a ready component, `InjectedModuleBoundary` calls its default export with `{ React }` and renders whatever comes back.
-
-The Vue shape is identical in spirit:
-
-```ts
-import * as Vue from "vue";
-import { createInjectedModuleBoundary } from "@rmc-toolkit/vue";
-
-const { InjectedModuleBoundary } = createInjectedModuleBoundary(Vue);
-```
-
-```html
-<InjectedModuleBoundary specifier="@fastflights/hello/index.mjs" />
-```
-
-## Worked example: extracting a panel from a monolith
-
-Here's what this looks like on a real host, not a from-scratch demo — a marketing page in a React SPA where one panel (a pricing plans feature) is handed off to another team to own and ship independently. Everything the application team touches to make that handoff happen — nothing else in the host's build, pipeline, or architecture changes.
+Here's what this looks like on a real host — a marketing page in a React SPA where one panel (a pricing plans feature) is handed off to another team to own and ship independently. Everything the application team touches to make that handoff happen — nothing else in the host's build, pipeline, or architecture changes.
 
 **1. One dependency** (`package.json`) — `@rmc-toolkit/core` is its peer:
 
@@ -74,7 +26,7 @@ Here's what this looks like on a real host, not a from-scratch demo — a market
 }
 ```
 
-**2. A hardcoded import map** (`index.html`) — the late-binding reference to the slice, and the *only* place the host names where it lives. Must come before any module script:
+**2. A hardcoded import map** (`index.html`) — must come before any module script:
 
 ```html
 <head>
@@ -84,6 +36,8 @@ Here's what this looks like on a real host, not a from-scratch demo — a market
   <!-- …rest of head… -->
 </head>
 ```
+
+This is the only place the host names where the slice lives, and the only thing that changes when the slice moves or ships a new build. The key (`@acme/pricing-plans`) is the specifier — the same string the boundary wrapper below passes as `specifier`, and the same one any other slice would use in an `import` statement. The value is the URL the browser actually fetches: where the slice's built module is hosted, resolved at runtime rather than at the host's build time.
 
 **3. A small boundary wrapper** — the whole integration. It creates the boundary once with the host's React, and maps the host's own locale into `context`:
 
