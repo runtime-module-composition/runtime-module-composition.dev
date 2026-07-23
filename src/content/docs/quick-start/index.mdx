@@ -7,7 +7,7 @@ import { CardGrid, Card } from '@astrojs/starlight/components';
 
 Runtime Module Composition lets a single page be assembled from pieces built with entirely different frontend frameworks, each developed and deployed on its own. A host owns the page and the import map; each slice is an independently built ESM module the host resolves and mounts at runtime — nothing here requires every piece to share a framework, a build pipeline, or a release schedule.
 
-That capability is easiest to see by building it once. Pick a framework below for a focused walkthrough that gets a host and one slice running on your machine.
+Pick the path that matches where you're starting from:
 
 <CardGrid>
 	<Card title={`<img src="/react-logo.svg" alt="" width="28" height="28" style="vertical-align: -0.4em; margin-right: 0.5rem;" /> React`}>
@@ -20,6 +20,11 @@ That capability is easiest to see by building it once. Pick a framework below fo
 
 		[Start the Vue quick start →](/quick-start/vue/)
 	</Card>
+	<Card title="Existing App">
+		Already have a bundled React or Vue app? Peel off one piece into an independent slice, without changing anything else about the app first.
+
+		[Decouple a piece →](/quick-start/existing-app/)
+	</Card>
 </CardGrid>
 
-Both walkthroughs build the same shape — a host that generates its own import map and a slice built and served completely independently of it — using each framework's own adapter and conventions. For the concepts behind either one, see [Technical Implementation](/technical-implementation/).
+The React and Vue walkthroughs build the same shape from scratch — a host that generates its own import map and a slice built and served completely independently of it — using each framework's own adapter and conventions. The Existing App path is different: it starts from an app you already have, and shows the narrower convention built for exactly that. For the concepts behind any of these, see [Technical Implementation](/technical-implementation/).

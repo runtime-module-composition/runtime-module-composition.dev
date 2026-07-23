@@ -69,7 +69,7 @@ export default defineConfig({
             { label: "Overview", slug: "quick-start" },
             { label: "React", slug: "quick-start/react" },
             { label: "Vue", slug: "quick-start/vue" },
-            { label: "Migrating an Existing App", slug: "quick-start/migrating" },
+            { label: "Existing App", slug: "quick-start/existing-app" },
           ],
         },
         {

@@ -626,7 +626,7 @@ Notes:
 
 ### `createInjectedModuleBoundary(React, extraDeps?)`
 
-For slices that need the *host's own* React instance — not a separately import-map-resolved copy — because they call hooks. See [Migrating an Existing App](/quick-start/migrating/) for when this applies instead of `createDynamicModuleBoundary`.
+For slices that need the *host's own* React instance — not a separately import-map-resolved copy — because they call hooks. See [Decoupling a Slice from an Existing App](/quick-start/existing-app/) for when this applies instead of `createDynamicModuleBoundary`.
 
 ```ts
 function createInjectedModuleBoundary<TExtraDeps extends object = {}>(
@@ -715,7 +715,7 @@ Internally: `useRuntimeHost` creates one `createRuntimeHostObservable` in `onMou
 
 ### `createInjectedModuleBoundary(Vue, extraDeps?)`
 
-The Vue equivalent of the React adapter's `createInjectedModuleBoundary` — same purpose, same fixed-once `deps` rule. See [Migrating an Existing App](/quick-start/migrating/) for when this applies.
+The Vue equivalent of the React adapter's `createInjectedModuleBoundary` — same purpose, same fixed-once `deps` rule. See [Decoupling a Slice from an Existing App](/quick-start/existing-app/) for when this applies.
 
 ```ts
 function createInjectedModuleBoundary<TExtraDeps extends object = {}>(
