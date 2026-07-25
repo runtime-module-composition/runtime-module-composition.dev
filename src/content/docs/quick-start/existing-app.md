@@ -11,6 +11,8 @@ That piece doesn't have to be heading toward a larger migration. A panel that ch
 
 A slice built for the plain-component or mount/unmount conventions is expected to bring its own React or Vue, typically resolved through the import map (`@esm.sh/react`). That's fine for a slice with no hooks or reactive state. It breaks the moment the slice calls `React.useEffect` or uses a Vue `ref` — those look up state that lives inside the *specific* React or Vue module instance driving the render, and an already-bundled host's own copy is a different module instance than whatever the slice fetched separately.
 
+This isn't only about code the slice writes itself. A bundled third-party dependency that touches React at module-evaluation time — a UI library that calls `React.createContext` as soon as it's imported, before any component has rendered — hits the identical problem, and it's easy to miss since it's not code you wrote. A slice built on this convention needs to stick to dependencies that only touch React inside render functions, not at import time; anything that needs page-wide singleton state beyond React itself isn't something this convention covers yet.
+
 `createInjectedModuleBoundary` solves this the direct way: the slice doesn't import React or Vue at all. It default-exports a factory that *receives* the host's own instance as an argument. (That's the slice author's side of the contract — if you're the one building the slice rather than integrating it into a host, see the [API Reference](/api-reference/#createinjectedmoduleboundaryreact-extradeps) for its exact shape.)
 
 ## Wiring it into your existing app
@@ -81,6 +83,48 @@ export const PricingPlansSlice = () => {
 ```
 
 That's the whole host-side change: **+1 dependency, +1 import-map tag, +1 wrapper file, and a one-line render swap.** The application team never touches the pricing domain's code again — it lives in the other team's repository and ships on their own pipeline.
+
+## Developing the slice standalone
+
+Once the slice is wired in, the next question is usually "how do I iterate on the slice without running the whole host app?" A small standalone harness answers that — and it reuses the exact same integration code from step 3, not a simplified stand-in for it:
+
+```tsx
+// dev/App.tsx — identical call shape to the host's own wrapper
+import React from "react";
+import { createInjectedModuleBoundary } from "@rmc-toolkit/react";
+
+const { InjectedModuleBoundary } = createInjectedModuleBoundary(React);
+
+export const App = () => (
+  <InjectedModuleBoundary
+    specifier="@acme/pricing-plans"
+    context={{ data: { locale: "en" } }}
+    fallback={null}
+    errorFallback={null}
+  />
+);
+```
+
+```tsx
+// dev/main.tsx — an ordinary Vite entry point, nothing RMC-specific
+import { createRoot } from "react-dom/client";
+import { App } from "./App";
+
+createRoot(document.getElementById("root")!).render(<App />);
+```
+
+```html
+<!-- dev/index.html — same import-map shape as the host, pointed at your local build -->
+<head>
+  <script type="importmap">
+    { "imports": { "@acme/pricing-plans": "http://localhost:5174/index.mjs" } }
+  </script>
+</head>
+```
+
+Nothing here is toolkit-provided, and nothing needs to be — `createInjectedModuleBoundary` is doing the same job it does in the host, so there's no separate harness mechanism that could quietly drift out of sync with production. (Whatever data the slice normally fetches over the network is the one piece left entirely to you — stub it however fits, e.g. intercepting `window.fetch` with sample responses in `dev/main.tsx`.)
+
+One deliberate constraint: point the import map at the slice's **built** output (`vite build --watch` serving from `vite preview`, or equivalent), not at a dev server serving raw source. The alias and evaluation-ordering handling from the previous section only take effect once the slice is actually built — loading unbuilt source can render fine locally and still break once it ships. This also means there's no HMR in this loop: editing the slice's source triggers a rebuild, but the browser needs a manual refresh to pick it up. That's the trade for the harness genuinely testing what ships, rather than a faster but unverified stand-in for it.
 
 ## Staying here is fine — or use it as a stepping stone
 
