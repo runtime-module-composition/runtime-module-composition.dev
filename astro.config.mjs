@@ -79,6 +79,10 @@ export default defineConfig({
             { label: "API Reference", slug: "api-reference" },
           ],
         },
+        {
+          label: "Articles",
+          items: [{ autogenerate: { directory: "articles" } }],
+        },
       ],
       customCss: ["./src/styles/custom.css"],
       components: {
