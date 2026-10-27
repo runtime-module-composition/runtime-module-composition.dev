@@ -420,7 +420,13 @@ const RESULTS: Record<ResultId, { title: string; href: string }> = {
 
 - [ ] **Step 4: Update the hero's "Get Started" action in `index.mdx`** from `link: /quick-start/` to `link: /choose-a-pattern/` (keep `text: "Get started"` and `variant: primary` unchanged).
 
-- [ ] **Step 5: Verify — manual browser walkthrough.** Run `npm run dev`, then using the Browser tool:
+- [ ] **Step 5: Verify — build.**
+```bash
+npm run build
+```
+Expected: build succeeds, no TypeScript/Astro compile errors in `PatternChooser.astro`'s inline script.
+
+- [ ] **Step 6: Verify — manual browser walkthrough.** Run `npm run dev`, then using the Browser tool:
   1. Navigate to the site root, click "Get started" — expect to land on `/choose-a-pattern/`.
   2. On the question flow, click "Into a DOM element, with its own rendering lifecycle" — expect the result card to show "Independent Mount" linking to `/quick-start/independent-mount/`.
   3. Click "Back" — expect the first question to reappear, no result shown.
@@ -429,7 +435,7 @@ const RESULTS: Record<ResultId, { title: string; href: string }> = {
   6. Click "Back" twice, then retake the flow choosing "It receives the host's instance..." — expect "Module Boundary — Injected" linking to `/quick-start/module-boundary/injected/`.
   7. Click through each of the three result links and confirm each loads its real page (not a 404).
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 ```bash
 git add src/components/PatternChooser.astro src/content/docs/choose-a-pattern.mdx astro.config.mjs src/content/docs/index.mdx
 git commit -m "feat: add pattern-selection entry flow, point Get Started at it"
