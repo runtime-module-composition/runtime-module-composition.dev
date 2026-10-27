@@ -1,0 +1,362 @@
+---
+title: "Quick Start: Module Boundary — Injected"
+description: Stand up a host that renders a slice directly inside its own component tree, with the slice receiving the host's own React or Vue instance instead of importing one separately.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Injected is the other [Module Boundary](/glossary/#module-boundary) export style, alongside [Direct](/quick-start/module-boundary/direct/). Instead of the slice importing its own copy of React or Vue through the import map, it default-exports a factory — `(deps) => Component` — and the host hands that factory its *own*, already-running framework instance. That's the whole difference: no second module instance to keep in sync, which matters the moment the slice needs hooks, reactive state, or anything else that only works against one specific framework instance. See [Slice conventions](/glossary/#slice-conventions) for how this compares to Direct and mount/unmount.
+
+This guide builds the **Module Boundary — Injected** pattern from scratch, for both React and Vue — pick the tab matching the host you want to build.
+
+## What you'll build
+
+Two Vite dev servers running side by side: a host app that owns the page and generates its own import map, and a slice app — a completely separate project — that the host mounts at a route, passing it the host's own framework instance instead of letting it fetch one independently.
+
+## Prerequisites
+
+Node.js 20 or later, and npm.
+
+## 1. Scaffold the host
+
+The host is an ordinary Vite app. In this pattern the host does more than render UI — it also generates and serves the browser import map that lets it resolve a slice's bare specifier at runtime. In a larger production deployment that responsibility might live in its own static asset host; folding it directly into the host here keeps this guide to a single app instead of two.
+
+<Tabs>
+	<TabItem label="React">
+	```bash
+	npm create vite@latest rmc-quickstart-host -- --template react-ts
+	cd rmc-quickstart-host
+	npm install
+	```
+	</TabItem>
+	<TabItem label="Vue">
+	```bash
+	npm create vite@latest rmc-quickstart-host -- --template vue-ts
+	cd rmc-quickstart-host
+	npm install
+	```
+	</TabItem>
+</Tabs>
+
+## 2. Install rmc-toolkit into the host
+
+`@rmc-toolkit/core` provides the manifest and import map primitives. `@rmc-toolkit/vite` is the Vite plugin that generates and injects the import map.
+
+<Tabs>
+	<TabItem label="React">
+	`@rmc-toolkit/react` is the adapter that creates the `InjectedModuleBoundary` component.
+
+	```bash
+	npm install @rmc-toolkit/core @rmc-toolkit/vite @rmc-toolkit/react react-router
+	```
+	</TabItem>
+	<TabItem label="Vue">
+	`@rmc-toolkit/vue` is the adapter that creates the `InjectedModuleBoundary` component.
+
+	```bash
+	npm install @rmc-toolkit/core @rmc-toolkit/vite @rmc-toolkit/vue vue-router
+	```
+	</TabItem>
+</Tabs>
+
+## 3. Define the manifest
+
+`namespace` is the specifier prefix every slice is addressed under. `assetsOrigin` is where slices are served from in production. `environments.development.sliceOrigins` points a slice's namespace entry at its local dev server instead, only in development.
+
+This manifest skips `externalDepsOrigin` and `externalDeps` entirely — unlike the Direct and Independent Mount guides, there's no framework package for the import map to serve. The slice you're about to write never imports React or Vue at all, so there's nothing of the host's framework to externalize.
+
+```ts
+import { defineManifest } from "@rmc-toolkit/core";
+
+export const manifest = defineManifest({
+  namespace: "@acme",
+  assetsOrigin: "https://assets.example.com",
+  environments: {
+    development: {
+      sliceOrigins: {
+        search: "http://localhost:5174",
+      },
+    },
+  },
+});
+```
+
+Save this as `src/runtime-composition.manifest.ts`.
+
+## 4. Wire the import map into the host's Vite config
+
+`runtimeComposition()` returns two plugins: one injects the generated import map into `index.html` before any module script runs, the other tells Vite not to bundle or rewrite specifiers the import map owns. This is the piece standing in for a separate asset host.
+
+<Tabs>
+	<TabItem label="React">
+	```ts
+	import { defineConfig } from "vite";
+	import react from "@vitejs/plugin-react";
+	import { runtimeComposition } from "@rmc-toolkit/vite";
+	import { manifest } from "./src/runtime-composition.manifest";
+
+	export default defineConfig({
+	  plugins: [
+	    react(),
+	    ...runtimeComposition({
+	      manifest,
+	      environment: "development",
+	    }),
+	  ],
+	});
+	```
+	</TabItem>
+	<TabItem label="Vue">
+	```ts
+	import { defineConfig } from "vite";
+	import vue from "@vitejs/plugin-vue";
+	import { runtimeComposition } from "@rmc-toolkit/vite";
+	import { manifest } from "./src/runtime-composition.manifest";
+
+	export default defineConfig({
+	  plugins: [
+	    vue(),
+	    ...runtimeComposition({
+	      manifest,
+	      environment: "development",
+	    }),
+	  ],
+	});
+	```
+	</TabItem>
+</Tabs>
+
+Replace the contents of `vite.config.ts` with this.
+
+## 5. Add the adapter
+
+`createInjectedModuleBoundary` is a factory: pass it your app's own framework instance and it returns an `InjectedModuleBoundary` component. Unlike `createDynamicModuleBoundary`, what it hands the slice isn't just that instance on its own — it's a fixed `deps` object (`{ React, ...extraDeps }` or `{ Vue, ...extraDeps }`, merged once when you call `createInjectedModuleBoundary`, not per render) that the slice's factory receives as its single argument.
+
+<Tabs>
+	<TabItem label="React">
+	```ts
+	import React from "react";
+	import { createInjectedModuleBoundary } from "@rmc-toolkit/react";
+
+	export const { InjectedModuleBoundary } = createInjectedModuleBoundary(React);
+	```
+	</TabItem>
+	<TabItem label="Vue">
+	```ts
+	import * as Vue from "vue";
+	import { createInjectedModuleBoundary } from "@rmc-toolkit/vue";
+
+	export const { InjectedModuleBoundary } = createInjectedModuleBoundary(Vue);
+	```
+	</TabItem>
+</Tabs>
+
+Save this as `src/rmc-adapter.ts`.
+
+## 6. Mount a slice by route
+
+Real navigation goes through a router rather than reading `window.location` directly, so slices resolve on every navigation without a full page reload. `resolveRoute` matches the current path against the manifest and returns the matching slice's module specifier, or `null` if nothing matches.
+
+<Tabs>
+	<TabItem label="React">
+	```tsx
+	import { BrowserRouter, Routes, Route, useLocation } from "react-router";
+	import { resolveRoute } from "@rmc-toolkit/core";
+	import { InjectedModuleBoundary } from "./rmc-adapter";
+	import { manifest } from "./runtime-composition.manifest";
+
+	function SliceSlot() {
+	  const location = useLocation();
+	  const match = resolveRoute(manifest, location.pathname);
+
+	  if (!match) {
+	    return <p>No slice for this route.</p>;
+	  }
+
+	  return (
+	    <InjectedModuleBoundary
+	      specifier={match.specifier}
+	      context={{ route: match, manifest }}
+	      fallback={<p>Loading...</p>}
+	      errorFallback={<p>Unable to load this section.</p>}
+	    />
+	  );
+	}
+
+	function App() {
+	  return (
+	    <BrowserRouter>
+	      <Routes>
+	        <Route path="*" element={<SliceSlot />} />
+	      </Routes>
+	    </BrowserRouter>
+	  );
+	}
+
+	export default App;
+	```
+
+	Replace the contents of `src/App.tsx` with this.
+	</TabItem>
+	<TabItem label="Vue">
+	```ts
+	import { computed } from "vue";
+	import { useRoute } from "vue-router";
+	import { resolveRoute } from "@rmc-toolkit/core";
+	import { InjectedModuleBoundary } from "./rmc-adapter";
+	import { manifest } from "./runtime-composition.manifest";
+
+	export default {
+	  components: { InjectedModuleBoundary },
+	  setup() {
+	    const route = useRoute();
+	    const match = computed(() => resolveRoute(manifest, route.fullPath));
+	    return { match };
+	  },
+	  template: `
+	    <InjectedModuleBoundary
+	      v-if="match"
+	      :specifier="match.specifier"
+	      :context="{ route: match, manifest }"
+	      :fallback="null"
+	      :error-fallback="null"
+	    />
+	    <p v-else>No slice for this route.</p>
+	  `,
+	};
+	```
+
+	Save this as `src/SliceSlot.ts`.
+
+	`vue-router` needs a catch-all route pointing at `SliceSlot`, installed when the app is created.
+
+	```ts
+	import { createApp } from "vue";
+	import { createRouter, createWebHistory } from "vue-router";
+	import SliceSlot from "./SliceSlot";
+
+	const router = createRouter({
+	  history: createWebHistory(),
+	  routes: [{ path: "/:pathMatch(.*)*", component: SliceSlot }],
+	});
+
+	createApp({ template: "<router-view />" }).use(router).mount("#app");
+	```
+
+	Replace the contents of `src/main.ts` with this.
+	</TabItem>
+</Tabs>
+
+The host is done — the next steps build the slice it's pointing at.
+
+## 7. Scaffold the slice
+
+A slice is a separate, independently built project with its own `package.json` — the host never bundles it. Scaffold it as a sibling directory to the host, not inside it.
+
+<Tabs>
+	<TabItem label="React">
+	```bash
+	npm create vite@latest rmc-quickstart-search -- --template react-ts
+	cd rmc-quickstart-search
+	npm install @rmc-toolkit/vite @rmc-toolkit/core
+	```
+	</TabItem>
+	<TabItem label="Vue">
+	```bash
+	npm create vite@latest rmc-quickstart-search -- --template vue-ts
+	cd rmc-quickstart-search
+	npm install @rmc-toolkit/vite @rmc-toolkit/core
+	```
+	</TabItem>
+</Tabs>
+
+Neither variant needs `@rmc-toolkit/react` or `@rmc-toolkit/vue` here — that package provides the host-side `createInjectedModuleBoundary`, and this is the slice.
+
+## 8. Copy the manifest into the slice
+
+Both the host and the slice need to agree on the same manifest. Copy `runtime-composition.manifest.ts` from the host project into this one's `src/` directory unchanged. In a larger project this file would live in a package both sides import instead of being duplicated.
+
+## 9. Build the slice as an ESM library
+
+`defineSliceBuild()` handles the mode-aware setup a slice needs: the dev-server port, a library-build fix for `process.env.NODE_ENV`, and entry-file auto-detection. `createRollupExternal()` externalizes anything the import map owns — with no `externalDeps` in this manifest, that's just the namespace prefix, since there's no framework package to keep out of this slice's bundle. `sliceName` determines where the production build lands, matching the URL the host's manifest expects.
+
+```ts
+import { defineConfig } from "vite";
+import { defineSliceBuild, createRollupExternal } from "@rmc-toolkit/vite";
+import { manifest } from "./src/runtime-composition.manifest";
+
+export default defineConfig(({ mode }) => {
+  const sliceBuild = defineSliceBuild({ mode, devPort: 5174, sliceName: "search" });
+
+  return mode === "development"
+    ? sliceBuild
+    : {
+        ...sliceBuild,
+        build: {
+          ...sliceBuild.build,
+          rollupOptions: { external: createRollupExternal(manifest) },
+        },
+      };
+});
+```
+
+Replace the contents of `vite.config.ts` with this.
+
+## 10. Write the slice
+
+A slice built for this convention default-exports a factory, not a ready component — `(deps) => Component`. The factory receives the host's framework instance through `deps` rather than importing it, which means this file can't use JSX: the classic JSX transform compiles down to an implicit `import React from "react"`, and importing React here is exactly what this convention avoids. Write it with `React.createElement` (or Vue's `h()`) from the injected `deps` instead — that's why this is `src/index.ts`, not `src/index.tsx`, even on the React side.
+
+<Tabs>
+	<TabItem label="React">
+	```ts
+	const SearchSlice = (deps: { React: typeof import("react") }) => {
+	  const { React } = deps;
+	  return () =>
+	    React.createElement("div", { "data-slice": "search" }, "Search slice loaded");
+	};
+
+	export default SearchSlice;
+	```
+	</TabItem>
+	<TabItem label="Vue">
+	```ts
+	const SearchSlice = (deps: { Vue: typeof import("vue") }) => {
+	  const { Vue } = deps;
+	  return {
+	    setup() {
+	      return () => Vue.h("div", { "data-slice": "search" }, "Search slice loaded");
+	    },
+	  };
+	};
+
+	export default SearchSlice;
+	```
+	</TabItem>
+</Tabs>
+
+Save this as `src/index.ts`.
+
+## 11. Run both together
+
+Start the slice first, then the host, in two separate terminals.
+
+```bash
+npm run dev
+```
+
+Run this in the slice's directory (`rmc-quickstart-search`) — it starts on port 5174, matching `devPort` above.
+
+```bash
+npm run dev
+```
+
+Run this in the host's directory (`rmc-quickstart-host`).
+
+Visit `http://localhost:5173/search`. The host resolves the route, fetches the slice through the import map, calls its factory with its own framework instance, and renders the result.
+
+## Next steps
+
+- [Decoupling a Slice from an Existing App](/quick-start/module-boundary/existing-app/) — the retrofit scenario this pattern was built for
+- [Quick Start: Module Boundary — Direct](/quick-start/module-boundary/direct/) — the React-only alternative that doesn't need injection
+- [Glossary](/glossary/#slice-conventions) — all three slice conventions in one place
+- [API Reference](/api-reference/) — full signatures for both `createInjectedModuleBoundary` functions

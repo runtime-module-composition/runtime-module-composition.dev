@@ -1,9 +1,11 @@
 ---
-title: "Quick Start: React"
-description: Stand up a React host and one slice locally, composed at runtime through import maps.
+title: "Quick Start: Independent Mount — React"
+description: Stand up a React host and one slice locally, composed at runtime through import maps, using the mount/unmount convention.
 ---
 
-This guide gets a single React host and one React slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. See [Quick Start: Vue](/quick-start/vue/) for the same walkthrough with Vue instead.
+This guide gets a single React host and one React slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. See [Quick Start: Independent Mount — Vue](/quick-start/independent-mount/vue/) for the same walkthrough with Vue instead.
+
+Want this without a manifest? See [No Manifest Host](/quick-start/advanced/no-manifest-host/).
 
 ## What you'll build
 
@@ -25,7 +27,7 @@ npm install
 
 ## 2. Install rmc-toolkit into the host
 
-`@rmc-toolkit/core` provides the manifest and import map primitives. `@rmc-toolkit/vite` is the Vite plugin that generates and injects the import map. `@rmc-toolkit/react` is the adapter that mounts slices into a React tree.
+`@rmc-toolkit/core` provides the manifest and import map primitives. `@rmc-toolkit/vite` is the Vite plugin that generates and injects the import map. `@rmc-toolkit/react` is the adapter that mounts slices into a React app.
 
 ```bash
 npm install @rmc-toolkit/core @rmc-toolkit/vite @rmc-toolkit/react react-router
@@ -85,59 +87,60 @@ Replace the contents of `vite.config.ts` with this.
 
 ## 5. Add the adapter
 
-`createDynamicModuleBoundary` is a factory: pass it your app's own `React` instance and it returns a `DynamicModuleBoundary` component that resolves a specifier, dynamically imports it, and renders it inside a `Suspense` boundary with error handling. Being a factory is what lets this package avoid ever bundling a second copy of React.
+`createReactAdapter` is a factory: pass it your app's own `React` instance and it returns a `useRuntimeHost` hook. Unlike a component-boundary adapter, this hook doesn't render the slice as a React component — it drives the same explicit `mount(target)`/`unmount()` contract Vue's adapter uses, which is what keeps the host framework-agnostic to whatever the slice is built with. It exposes a `ref` to bind to the element the slice mounts into, plus a `status` for loading and error state.
 
 ```ts
-import React from "react";
-import { createDynamicModuleBoundary } from "@rmc-toolkit/react";
+import * as React from "react";
+import { createReactAdapter } from "@rmc-toolkit/react";
 
-export const { DynamicModuleBoundary } = createDynamicModuleBoundary(React);
+export const { useRuntimeHost } = createReactAdapter(React);
 ```
 
 Save this as `src/rmc-adapter.ts`.
 
 ## 6. Mount a slice by route
 
-Real navigation goes through a router rather than reading `window.location` directly, so slices resolve on every navigation without a full page reload. `useLocation` gives the current path reactively; `resolveRoute` matches that path against the manifest and returns the matching slice's module specifier, or `null` if nothing matches.
+`useLocation()` gives the current path reactively; it's passed to `useRuntimeHost` as a plain string, and the hook re-resolves whenever that string changes on navigation. This component is set up as the catch-all page every route renders, so it always resolves whatever the current path is.
 
 ```tsx
-import { BrowserRouter, Routes, Route, useLocation } from "react-router";
-import { resolveRoute } from "@rmc-toolkit/core";
-import { DynamicModuleBoundary } from "./rmc-adapter";
+import { useLocation } from "react-router";
+import { useRuntimeHost } from "./rmc-adapter";
 import { manifest } from "./runtime-composition.manifest";
 
 function SliceSlot() {
   const location = useLocation();
-  const match = resolveRoute(manifest, location.pathname);
-
-  if (!match) {
-    return <p>No slice for this route.</p>;
-  }
-
+  const { ref, status } = useRuntimeHost<HTMLDivElement>(location.pathname, { manifest });
   return (
-    <DynamicModuleBoundary
-      specifier={match.specifier}
-      context={{ route: match, manifest }}
-      fallback={<p>Loading...</p>}
-      errorFallback={<p>Unable to load this section.</p>}
-    />
+    <>
+      {status.type === "loading" && <p>Loading...</p>}
+      <div ref={ref} />
+    </>
   );
 }
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="*" element={<SliceSlot />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
-export default App;
+export default SliceSlot;
 ```
 
-Replace the contents of `src/App.tsx` with this. The host is done — the next steps build the slice it's pointing at.
+Save this as `src/SliceSlot.tsx`.
+
+`react-router` needs a catch-all route pointing at `SliceSlot`, installed when the app is created.
+
+```tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router";
+import SliceSlot from "./SliceSlot";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <BrowserRouter>
+    <Routes>
+      <Route path="*" element={<SliceSlot />} />
+    </Routes>
+  </BrowserRouter>,
+);
+```
+
+Replace the contents of `src/main.tsx` with this. The host is done — the next steps build the slice it's pointing at.
 
 ## 7. Scaffold the slice
 
@@ -181,17 +184,31 @@ Replace the contents of `vite.config.ts` with this.
 
 ## 10. Write the slice
 
-A slice built for `DynamicModuleBoundary` default-exports a plain component. It imports React through the import map's external prefix rather than the bare `"react"` specifier, since the prefixed form is what the host's import map actually owns.
+A slice built for the `mount()`/`unmount()` convention exports an object with both methods rather than a default component. It imports React and `react-dom/client` through the import map's external prefix rather than the bare `"react"`/`"react-dom/client"` specifiers, since the prefixed form is what the host's import map actually owns.
 
 ```tsx
 import React from "@esm.sh/react";
+import ReactDOM from "@esm.sh/react-dom/client";
 
-const SearchSlice = () => <div data-slice="search">Search slice loaded</div>;
+const SliceComponent = () => <div data-slice="search">Search slice loaded</div>;
 
-export default SearchSlice;
+let root: ReactDOM.Root | null = null;
+
+const slice = {
+  mount(target: Element): void {
+    root = ReactDOM.createRoot(target);
+    root.render(<SliceComponent />);
+  },
+  unmount(): void {
+    root?.unmount();
+    root = null;
+  },
+};
+
+export default slice;
 ```
 
-Replace the contents of `src/App.tsx` with this, or delete it and put this in `src/index.tsx` instead — either is fine, `defineSliceBuild()` looks for `src/index.tsx` first.
+Replace the contents of `src/index.tsx` with this. `defineSliceBuild()` looks for `src/index.tsx` first, then `src/index.ts` — this component uses JSX, so `src/index.tsx` is the natural fit.
 
 ## 11. Run both together
 
@@ -213,6 +230,6 @@ Visit `http://localhost:5173/search`. The host resolves the route, fetches the s
 
 ## Next steps
 
-- [Quick Start: Vue](/quick-start/vue/) — the same walkthrough with Vue instead
+- [Quick Start: Independent Mount — Vue](/quick-start/independent-mount/vue/) — the same walkthrough with Vue instead
 - [API Reference](/api-reference/) — every exported method, with implementation notes
 - [Multi-Framework Demo](/demo/) — a larger, multi-framework reference implementation

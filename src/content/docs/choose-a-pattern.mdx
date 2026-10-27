@@ -1,0 +1,10 @@
+---
+title: "Choose a Pattern"
+description: "Answer two questions to find out which Runtime Module Composition pattern your application needs."
+---
+
+import PatternChooser from '../../components/PatternChooser.astro';
+
+Runtime Module Composition offers two patterns for handing control to a slice: **Module Boundary** keeps the slice inside the host's own framework tree, while **Independent Mount** hands the slice a DOM element and lets it manage its own rendering lifecycle. Answer the questions below to find out which one fits your situation.
+
+<PatternChooser />

@@ -1,9 +1,9 @@
 ---
 title: Technical Implementation
-description: How Runtime Module Composition works in production with a host shell, import maps, route resolution, and dynamic ESM loading.
+description: How Runtime Module Composition works in production with a Manifest Host, import maps, route resolution, and dynamic ESM loading.
 ---
 
-Runtime Module Composition is a browser-native micro frontend strategy for composing independently built and deployed JavaScript modules at runtime. Instead of producing one application bundle, a host shell loads a shared import map, resolves route ownership, and dynamically imports the frontend module responsible for the current user journey.
+Runtime Module Composition is a browser-native micro frontend strategy for composing independently built and deployed JavaScript modules at runtime. Instead of producing one application bundle, a Manifest Host loads a shared import map, resolves route ownership, and dynamically imports the frontend module responsible for the current user journey.
 
 This document describes the reusable technical implementation pattern itself, independent of any specific tooling. If you want a ready-made implementation instead of hand-rolling one, [`rmc-toolkit`](https://github.com/runtime-module-composition/rmc-toolkit) implements everything below as `defineManifest()`, `createImportMap()`, `createRuntimeHost()`, and framework adapters — see [Quick Start](/quick-start/) and the [API Reference](/api-reference/).
 
@@ -20,7 +20,7 @@ This document describes the reusable technical implementation pattern itself, in
 
 Runtime Module Composition has four moving parts:
 
-1. A host shell owns the document, root React tree, global routing context, theme providers, navigation, and footer.
+1. A Manifest Host owns the document, root React tree, global routing context, theme providers, navigation, and footer.
 2. An import map defines where bare module specifiers resolve at runtime.
 3. Feature slices build ESM outputs, usually as `*.mjs` files, and publish them to a static asset origin.
 4. A runtime loader maps the current route to a module specifier and imports it dynamically.
@@ -29,7 +29,7 @@ The result is one user-facing application made from many independently owned mod
 
 ```mermaid
 flowchart LR
-  Browser["Browser"] --> Shell["Host shell"]
+  Browser["Browser"] --> Shell["Manifest Host"]
   Shell --> ImportMap["Runtime import map"]
   Shell --> Router["Route resolver"]
   Router --> Loader["Dynamic module loader"]
@@ -97,11 +97,11 @@ Namespace and route conventions should cover most slices without any per-slice c
 
 Treat these as escape hatches, not the primary mechanism. If the list of overrides grows to rival the number of conventionally-resolved slices, that's a signal the convention itself needs to change instead.
 
-## Host Shell Responsibilities
+## Manifest Host Responsibilities
 
-The host shell should stay thin but decisive. It owns the application shell and the runtime composition boundary.
+The Manifest Host should stay thin but decisive. It owns the application shell and the runtime composition boundary.
 
-Host responsibilities:
+Manifest Host responsibilities:
 
 - serve the HTML document;
 - load the import map before module execution;
@@ -289,7 +289,7 @@ Recommended deployment flow:
 2. Upload the build output to a versioned or stable asset path.
 3. Update the import map when a public module URL changes.
 4. Deploy the import map.
-5. Deploy or invalidate the host shell if the composition contract changed.
+5. Deploy or invalidate the Manifest Host if the composition contract changed.
 
 For low-risk updates, a slice can often deploy independently if its public entry point remains stable.
 
@@ -364,6 +364,6 @@ Before changing a shared dependency:
 
 ## Why This Strategy Works
 
-Runtime Module Composition keeps the browser as the composition runtime. The host shell provides the stable product structure. The import map provides the dependency and module resolution contract. Slices remain independently owned and deployed, but they render as one coherent application because they share the same runtime graph.
+Runtime Module Composition keeps the browser as the composition runtime. The Manifest Host provides the stable product structure. The import map provides the dependency and module resolution contract. Slices remain independently owned and deployed, but they render as one coherent application because they share the same runtime graph.
 
 The strategy is deliberately small: standard ESM, standard import maps, static assets, and dynamic imports. That makes it understandable, portable, and operationally friendly.

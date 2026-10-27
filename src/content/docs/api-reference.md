@@ -429,7 +429,7 @@ Marking a specifier `external: true` is enough for a production build — Rollup
 
 ### `defineSliceBuild(options)`
 
-Mode-aware Vite config for a **slice's** own `vite.config.ts`, replacing hand-copied build boilerplate. It does not externalize import-map-owned dependencies by itself — pair it with `createRollupExternal()` for that (see [Quick Start: React](/quick-start/react/#9-build-the-slice-as-an-esm-library)).
+Mode-aware Vite config for a **slice's** own `vite.config.ts`, replacing hand-copied build boilerplate. It does not externalize import-map-owned dependencies by itself — pair it with `createRollupExternal()` for that (see [Quick Start: Module Boundary — Direct](/quick-start/module-boundary/direct/#9-build-the-slice-as-an-esm-library)).
 
 ```ts
 export type SliceBuildOptions = {
@@ -626,7 +626,7 @@ Notes:
 
 ### `createInjectedModuleBoundary(React, extraDeps?)`
 
-For slices that need the *host's own* React instance — not a separately import-map-resolved copy — because they call hooks. See [Decoupling a Slice from an Existing App](/quick-start/existing-app/) for when this applies instead of `createDynamicModuleBoundary`.
+For slices that need the *host's own* React instance — not a separately import-map-resolved copy — because they call hooks. See [Decoupling a Slice from an Existing App](/quick-start/module-boundary/existing-app/) for when this applies instead of `createDynamicModuleBoundary`.
 
 ```ts
 function createInjectedModuleBoundary<TExtraDeps extends object = {}>(
@@ -715,7 +715,7 @@ Internally: `useRuntimeHost` creates one `createRuntimeHostObservable` in `onMou
 
 ### `createInjectedModuleBoundary(Vue, extraDeps?)`
 
-The Vue equivalent of the React adapter's `createInjectedModuleBoundary` — same purpose, same fixed-once `deps` rule. See [Decoupling a Slice from an Existing App](/quick-start/existing-app/) for when this applies.
+The Vue equivalent of the React adapter's `createInjectedModuleBoundary` — same purpose, same fixed-once `deps` rule. See [Decoupling a Slice from an Existing App](/quick-start/module-boundary/existing-app/) for when this applies.
 
 ```ts
 function createInjectedModuleBoundary<TExtraDeps extends object = {}>(

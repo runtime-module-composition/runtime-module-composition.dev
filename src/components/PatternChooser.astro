@@ -1,0 +1,202 @@
+---
+---
+
+<div class="pattern-chooser">
+  <button id="pc-back" type="button" class="pc-back" hidden>&larr; Back</button>
+  <div id="pc-question" class="pc-question"></div>
+  <div id="pc-result" class="pc-result" hidden></div>
+</div>
+
+<script>
+  type StepId = "render-style" | "framework-receipt";
+  type ResultId = "independent-mount" | "module-boundary-direct" | "module-boundary-injected";
+
+  type Option = { label: string; next: { type: "step"; id: StepId } | { type: "result"; id: ResultId } };
+  type Step = { id: StepId; question: string; options: Option[] };
+
+  const STEPS: Record<StepId, Step> = {
+    "render-style": {
+      id: "render-style",
+      question: "How should the slice render?",
+      options: [
+        { label: "As a component inside my framework tree", next: { type: "step", id: "framework-receipt" } },
+        { label: "Into a DOM element, with its own rendering lifecycle", next: { type: "result", id: "independent-mount" } },
+      ],
+    },
+    "framework-receipt": {
+      id: "framework-receipt",
+      question: "How does the slice receive its framework?",
+      options: [
+        { label: "It imports its own copy, resolved through the import map", next: { type: "result", id: "module-boundary-direct" } },
+        { label: "It receives the host's instance instead of importing one", next: { type: "result", id: "module-boundary-injected" } },
+      ],
+    },
+  };
+
+  const RESULTS: Record<ResultId, { title: string; href: string }> = {
+    "independent-mount": { title: "Independent Mount", href: "/quick-start/independent-mount/" },
+    "module-boundary-direct": { title: "Module Boundary — Direct", href: "/quick-start/module-boundary/direct/" },
+    "module-boundary-injected": { title: "Module Boundary — Injected", href: "/quick-start/module-boundary/injected/" },
+  };
+
+  const backButton = document.getElementById("pc-back") as HTMLButtonElement;
+  const questionEl = document.getElementById("pc-question") as HTMLDivElement;
+  const resultEl = document.getElementById("pc-result") as HTMLDivElement;
+
+  let currentStepId: StepId = "render-style";
+  let currentResultId: ResultId | null = null;
+  const history: StepId[] = [];
+
+  function renderQuestion(step: Step): void {
+    resultEl.hidden = true;
+    resultEl.innerHTML = "";
+
+    questionEl.hidden = false;
+    questionEl.innerHTML = "";
+
+    const questionText = document.createElement("p");
+    questionText.className = "pc-question-text";
+    questionText.textContent = step.question;
+    questionEl.appendChild(questionText);
+
+    const optionList = document.createElement("div");
+    optionList.className = "pc-options";
+
+    step.options.forEach((option) => {
+      const optionButton = document.createElement("button");
+      optionButton.type = "button";
+      optionButton.className = "pc-option";
+      optionButton.textContent = option.label;
+      optionButton.addEventListener("click", () => {
+        history.push(currentStepId);
+        if (option.next.type === "step") {
+          currentStepId = option.next.id;
+          currentResultId = null;
+        } else {
+          currentResultId = option.next.id;
+        }
+        render();
+      });
+      optionList.appendChild(optionButton);
+    });
+
+    questionEl.appendChild(optionList);
+  }
+
+  function renderResult(resultId: ResultId): void {
+    questionEl.hidden = true;
+    questionEl.innerHTML = "";
+
+    resultEl.hidden = false;
+    resultEl.innerHTML = "";
+
+    const result = RESULTS[resultId];
+
+    const resultTitle = document.createElement("p");
+    resultTitle.className = "pc-result-title";
+    resultTitle.textContent = `Recommended pattern: ${result.title}`;
+    resultEl.appendChild(resultTitle);
+
+    const resultLink = document.createElement("a");
+    resultLink.className = "pc-result-link";
+    resultLink.href = result.href;
+    resultLink.textContent = `Go to the ${result.title} quick start →`;
+    resultEl.appendChild(resultLink);
+  }
+
+  function render(): void {
+    backButton.hidden = history.length === 0;
+
+    if (currentResultId) {
+      renderResult(currentResultId);
+    } else {
+      renderQuestion(STEPS[currentStepId]);
+    }
+  }
+
+  backButton.addEventListener("click", () => {
+    const previousStepId = history.pop();
+    if (previousStepId === undefined) {
+      return;
+    }
+    currentStepId = previousStepId;
+    currentResultId = null;
+    render();
+  });
+
+  render();
+</script>
+
+<style>
+  .pattern-chooser {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    background-color: var(--sl-color-black);
+  }
+
+  .pc-back {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    background-color: transparent;
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-sm);
+    cursor: pointer;
+  }
+
+  .pc-back[hidden] {
+    display: none;
+  }
+
+  .pc-back:hover {
+    color: var(--sl-color-white);
+    border-color: var(--sl-color-gray-3);
+  }
+
+  .pc-question-text,
+  .pc-result-title {
+    font-size: var(--sl-text-lg);
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: var(--sl-color-white);
+  }
+
+  .pc-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .pc-option {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    background-color: var(--sl-color-gray-6);
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-base);
+    cursor: pointer;
+  }
+
+  .pc-option:hover {
+    border-color: var(--sl-color-accent);
+    background-color: var(--sl-color-gray-5);
+  }
+
+  .pc-result-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--sl-color-accent-high);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .pc-result-link:hover {
+    text-decoration: underline;
+  }
+</style>

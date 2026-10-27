@@ -1,0 +1,25 @@
+---
+title: "Quick Start: Independent Mount"
+description: Stand up a host and one slice locally, composed at runtime through import maps, using the mount/unmount convention.
+---
+
+import { CardGrid, Card } from '@astrojs/starlight/components';
+
+Independent Mount is the pattern where a host mounts a slice into a DOM element via an explicit `mount()`/`unmount()` contract, rather than rendering it as one of the host's own components — the host stays framework-agnostic to whatever the slice is built with. That framework-agnosticism doesn't imply CSS isolation, sandboxing, or a separate JavaScript environment, though — it's still the same page, the same `document`, the same global scope.
+
+Pick the framework you want the host built with:
+
+<CardGrid>
+	<Card title={`<img src="/react-logo.svg" alt="" width="28" height="28" style="vertical-align: -0.4em; margin-right: 0.5rem;" /> React`}>
+		A React host mounting a React slice through `mount()`/`unmount()`, in 11 steps.
+
+		[Start the React quick start →](/quick-start/independent-mount/react/)
+	</Card>
+	<Card title={`<img src="/vue-logo.svg" alt="" width="28" height="28" style="vertical-align: -0.4em; margin-right: 0.5rem;" /> Vue`}>
+		A Vue host mounting a Vue slice through `mount()`/`unmount()`, in 11 steps.
+
+		[Start the Vue quick start →](/quick-start/independent-mount/vue/)
+	</Card>
+</CardGrid>
+
+Want this without a manifest? See [No Manifest Host](/quick-start/advanced/no-manifest-host/).

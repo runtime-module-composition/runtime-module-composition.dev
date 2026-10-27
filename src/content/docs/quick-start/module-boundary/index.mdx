@@ -1,0 +1,28 @@
+---
+title: "Quick Start: Module Boundary"
+description: Stand up a host that renders a slice as a node inside its own component tree, using either Module Boundary export style.
+---
+
+import { CardGrid, Card } from '@astrojs/starlight/components';
+
+Module Boundary is the pattern where a slice renders as a first-class node inside the host's own framework render tree, loaded through the host's native lazy/Suspense/error-boundary machinery — host and slice must share a framework. It has two export styles, [Direct and Injected](/glossary/#slice-conventions), plus a guide for retrofitting it onto an app you already have.
+
+Pick the path that matches what you're building:
+
+<CardGrid>
+	<Card title={`<img src="/react-logo.svg" alt="" width="28" height="28" style="vertical-align: -0.4em; margin-right: 0.5rem;" /> Direct`}>
+		A React host rendering a slice as a plain default-exported component, in 11 steps. React only — there's no Vue equivalent.
+
+		[Start the Direct quick start →](/quick-start/module-boundary/direct/)
+	</Card>
+	<Card title="Injected">
+		A React or Vue host rendering a slice that receives the host's own framework instance through a default-exported factory, in 11 steps.
+
+		[Start the Injected quick start →](/quick-start/module-boundary/injected/)
+	</Card>
+	<Card title="Existing App">
+		Already have a bundled React or Vue app? Peel off one piece into an independent slice, without changing anything else about the app first.
+
+		[Decouple a piece →](/quick-start/module-boundary/existing-app/)
+	</Card>
+</CardGrid>
