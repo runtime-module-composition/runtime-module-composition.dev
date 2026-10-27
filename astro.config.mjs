@@ -67,9 +67,9 @@ export default defineConfig({
           label: "Quick Start",
           items: [
             { label: "Overview", slug: "quick-start" },
-            { label: "React", slug: "quick-start/react" },
+            { label: "React", slug: "quick-start/module-boundary/direct" },
             { label: "Vue", slug: "quick-start/independent-mount/vue" },
-            { label: "Existing App", slug: "quick-start/existing-app" },
+            { label: "Existing App", slug: "quick-start/module-boundary/existing-app" },
           ],
         },
         {

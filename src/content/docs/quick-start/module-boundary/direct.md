@@ -1,13 +1,13 @@
 ---
-title: "Quick Start: React"
-description: Stand up a React host and one slice locally, composed at runtime through import maps.
+title: "Quick Start: Module Boundary — Direct"
+description: Stand up a React host that renders a slice directly inside its own component tree, as a plain default-exported component.
 ---
 
-This guide gets a single React host and one React slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. See [Quick Start: Vue](/quick-start/vue/) for the same walkthrough with Vue instead.
+This guide gets a single React host and one React slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. Direct is React only — there's no Vue equivalent (see [Slice conventions](/glossary/#slice-conventions)). Building a Vue slice into your component tree? Use [Module Boundary — Injected](/quick-start/module-boundary/injected/) instead.
 
 ## What you'll build
 
-Two Vite dev servers running side by side: a host app that owns the page and generates its own import map, and a slice app — a completely separate project — that the host mounts at a route without ever bundling it.
+This builds the **Module Boundary — Direct** pattern specifically: the slice renders as a plain component inside the host's own React tree, loaded through `createDynamicModuleBoundary`. Two Vite dev servers running side by side: a host app that owns the page and generates its own import map, and a slice app — a completely separate project — that the host mounts at a route without ever bundling it.
 
 ## Prerequisites
 
@@ -213,6 +213,6 @@ Visit `http://localhost:5173/search`. The host resolves the route, fetches the s
 
 ## Next steps
 
-- [Quick Start: Vue](/quick-start/vue/) — the same walkthrough with Vue instead
+- [Quick Start: Module Boundary — Injected](/quick-start/module-boundary/injected/) — the React-and-Vue convention for when a slice needs the host's own framework instance instead
 - [API Reference](/api-reference/) — every exported method, with implementation notes
 - [Multi-Framework Demo](/demo/) — a larger, multi-framework reference implementation

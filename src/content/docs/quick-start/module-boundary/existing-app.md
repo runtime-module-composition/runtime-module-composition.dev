@@ -3,7 +3,7 @@ title: Decoupling a Slice from an Existing App
 description: Extract one piece of an already-bundled React or Vue app into an independently deployed slice — as the start of a migration, or just to give that piece its own release cadence.
 ---
 
-The [React](/quick-start/react/) and [Vue](/quick-start/vue/) quick starts both assume you're starting from nothing — a host that resolves *all* of its shared dependencies through the import map, same as its slices. This guide is for the opposite situation: you already have a working, normally-bundled application, and you want to peel off one piece of it into an independently built and deployed slice, today, without first re-architecting how the rest of the app resolves React or Vue.
+[Module Boundary — Injected](/quick-start/module-boundary/injected/) assumes you're building a slice from scratch, resolving its own dependencies the standard way. This guide is for the opposite situation: you already have a working, normally-bundled application, and you want to peel off one piece of it into an independently built and deployed slice, today, without first re-architecting how the rest of the app resolves React or Vue.
 
 That piece doesn't have to be heading toward a larger migration. A panel that changes on a different schedule than the rest of the app, that a different team owns, or that you'd simply rather stop coordinating releases around, is reason enough on its own — the toolkit doesn't need to become your whole architecture to be worth using for one thing.
 
@@ -130,11 +130,11 @@ One deliberate constraint: point the import map at the slice's **built** output 
 
 If the goal was to isolate one piece — give it its own release cadence, its own repository, one less thing to coordinate — there's no obligation to go any further. A slice built this way is a complete, working piece of Runtime Module Composition on its own, and it's fine to leave it exactly as it is.
 
-If you *do* want to go further, there's a path off it: once a slice built this way — or the host itself — moves its *own* React or Vue usage onto the import-map convention too (the same `@esm.sh/react`-style specifier every other slice already uses), there's no more need for the factory indirection. At that point, drop the deps bag and switch the slice to the mount/unmount convention (React or Vue), or — for a React slice specifically — the plain-component convention (`createDynamicModuleBoundary`; there's no Vue equivalent of this one, see [Slice conventions](/glossary/#slice-conventions)). `createInjectedModuleBoundary` makes that first extraction possible before the rest of a migration happens, if a migration is where you're headed — it just isn't the only reason to use it.
+If you *do* want to go further, there's a path off it: once a slice built this way — or the host itself — moves its *own* React or Vue usage onto the import-map convention too (the same `@esm.sh/react`-style specifier every other slice already uses), there's no more need for the factory indirection. At that point, drop the deps bag and switch the slice to [the mount/unmount convention](/quick-start/independent-mount/) (React or Vue), or — for a React slice specifically — [Direct](/quick-start/module-boundary/direct/) (`createDynamicModuleBoundary`; there's no Vue equivalent of this one, see [Slice conventions](/glossary/#slice-conventions)). `createInjectedModuleBoundary` makes that first extraction possible before the rest of a migration happens, if a migration is where you're headed — it just isn't the only reason to use it.
 
 ## Next steps
 
-- [Quick Start: React](/quick-start/react/) — the full from-scratch walkthrough, if you want to build a slice the standard way
-- [Quick Start: Vue](/quick-start/vue/)
+- [Quick Start: Module Boundary — Injected](/quick-start/module-boundary/injected/) — the full from-scratch walkthrough, if you want to build a slice the standard way
+- [Quick Start: Module Boundary — Direct](/quick-start/module-boundary/direct/)
 - [Glossary](/glossary/#slice-conventions) — all three slice conventions in one place
 - [API Reference](/api-reference/) — full signatures for both `createInjectedModuleBoundary` functions
