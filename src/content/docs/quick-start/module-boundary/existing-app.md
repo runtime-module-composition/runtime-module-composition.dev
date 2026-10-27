@@ -3,13 +3,13 @@ title: Decoupling a Slice from an Existing App
 description: Extract one piece of an already-bundled React or Vue app into an independently deployed slice — as the start of a migration, or just to give that piece its own release cadence.
 ---
 
-[Module Boundary — Injected](/quick-start/module-boundary/injected/) assumes you're building a slice from scratch, resolving its own dependencies the standard way. This guide is for the opposite situation: you already have a working, normally-bundled application, and you want to peel off one piece of it into an independently built and deployed slice, today, without first re-architecting how the rest of the app resolves React or Vue.
+[Module Boundary — Injected](/quick-start/module-boundary/injected/) walks through this convention on a brand-new host and slice. This guide is the retrofit case — plugging Injected into an app you already have: a working, normally-bundled application where you want to peel off one piece of it into an independently built and deployed slice, today, without first re-architecting how the rest of the app resolves React or Vue.
 
 That piece doesn't have to be heading toward a larger migration. A panel that changes on a different schedule than the rest of the app, that a different team owns, or that you'd simply rather stop coordinating releases around, is reason enough on its own — the toolkit doesn't need to become your whole architecture to be worth using for one thing.
 
 ## Why this needs its own convention
 
-A slice built for the plain-component or mount/unmount conventions is expected to bring its own React or Vue, typically resolved through the import map (`@esm.sh/react`). That's fine for a slice with no hooks or reactive state. It breaks the moment the slice calls `React.useEffect` or uses a Vue `ref` — those look up state that lives inside the *specific* React or Vue module instance driving the render, and an already-bundled host's own copy is a different module instance than whatever the slice fetched separately.
+A slice built for the Direct or mount/unmount conventions is expected to bring its own React or Vue, typically resolved through the import map (`@esm.sh/react`). That's fine for a slice with no hooks or reactive state. It breaks the moment the slice calls `React.useEffect` or uses a Vue `ref` — those look up state that lives inside the *specific* React or Vue module instance driving the render, and an already-bundled host's own copy is a different module instance than whatever the slice fetched separately.
 
 This isn't only about code the slice writes itself. A bundled third-party dependency that touches React at module-evaluation time — a UI library that calls `React.createContext` as soon as it's imported, before any component has rendered — hits the identical problem, and it's easy to miss since it's not code you wrote. A slice built on this convention needs to stick to dependencies that only touch React inside render functions, not at import time; anything that needs page-wide singleton state beyond React itself isn't something this convention covers yet.
 
@@ -39,7 +39,7 @@ Here's what this looks like on a real host — a marketing page in a React SPA w
 </head>
 ```
 
-This is the only place the host names where the slice lives, and the only thing that changes when the slice moves or ships a new build. The key (`@acme/pricing-plans`) is the specifier — the same string the boundary wrapper below passes as `specifier`, and the same one any other slice would use in an `import` statement. The value is the URL the browser actually fetches: where the slice's built module is hosted, resolved at runtime rather than at the host's build time.
+This is the only place the host names where the slice lives, and the only thing that changes when the slice moves or ships a new build. The key (`@acme/pricing-plans`) is the specifier — the same string the boundary wrapper below passes as `specifier`, and the same one any other slice would use in an `import` statement. The value is the URL the browser actually fetches: where the slice's built module is hosted, resolved at runtime rather than at the host's build time. This hardcoded tag, with no manifest involved, is exactly what [No Manifest Host](/quick-start/advanced/no-manifest-host/) means — see that page for what else does and doesn't work without one.
 
 **3. A small boundary wrapper** — the whole integration. It creates the boundary once with the host's React, and maps the host's own locale into `context`:
 
@@ -134,7 +134,7 @@ If you *do* want to go further, there's a path off it: once a slice built this w
 
 ## Next steps
 
-- [Quick Start: Module Boundary — Injected](/quick-start/module-boundary/injected/) — the full from-scratch walkthrough, if you want to build a slice the standard way
+- [Quick Start: Module Boundary — Injected](/quick-start/module-boundary/injected/) — the same convention, set up from scratch with a manifest
 - [Quick Start: Module Boundary — Direct](/quick-start/module-boundary/direct/)
 - [Glossary](/glossary/#slice-conventions) — all three slice conventions in one place
 - [API Reference](/api-reference/) — full signatures for both `createInjectedModuleBoundary` functions

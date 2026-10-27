@@ -3,7 +3,7 @@ title: "Quick Start: Module Boundary — Direct"
 description: Stand up a React host that renders a slice directly inside its own component tree, as a plain default-exported component.
 ---
 
-This guide gets a single React host and one React slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. Direct is React only — there's no Vue equivalent (see [Slice conventions](/glossary/#slice-conventions)). Building a Vue slice into your component tree? Use [Module Boundary — Injected](/quick-start/module-boundary/injected/) instead.
+This guide gets a single React host and one React slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. Direct is React only — there's no Vue equivalent (see [Slice conventions](/glossary/#slice-conventions)). Building a Vue slice into your component tree? Use [Module Boundary — Injected](/quick-start/module-boundary/injected/) instead. Want this without a manifest? See [No Manifest Host](/quick-start/advanced/no-manifest-host/).
 
 ## What you'll build
 
@@ -191,7 +191,7 @@ const SearchSlice = () => <div data-slice="search">Search slice loaded</div>;
 export default SearchSlice;
 ```
 
-Replace the contents of `src/App.tsx` with this, or delete it and put this in `src/index.tsx` instead — either is fine, `defineSliceBuild()` looks for `src/index.tsx` first.
+Save this as `src/index.tsx` — `defineSliceBuild()` looks for `src/index.tsx` first, then `src/index.ts`.
 
 ## 11. Run both together
 

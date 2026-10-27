@@ -5,7 +5,7 @@ description: Get a host and one slice running locally, composed at runtime throu
 
 import { CardGrid, Card } from '@astrojs/starlight/components';
 
-Runtime Module Composition lets a single page be assembled from pieces built with entirely different frontend frameworks, each developed and deployed on its own. A host owns the page and the import map; each slice is an independently built ESM module the host resolves and mounts at runtime — nothing here requires every piece to share a framework, a build pipeline, or a release schedule.
+Runtime Module Composition lets a single page be assembled from pieces built with entirely different frontend frameworks, each developed and deployed on its own. A host owns the page and the import map; each slice is an independently built ESM module the host resolves and mounts at runtime — nothing here requires every piece to share a build pipeline or a release schedule, and Independent Mount doesn't even require the host and slice to share a framework.
 
 Pick the pattern that matches how the slice should relate to the host:
 

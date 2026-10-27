@@ -5,6 +5,8 @@ description: Stand up a React host and one slice locally, composed at runtime th
 
 This guide gets a single React host and one React slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. See [Quick Start: Independent Mount — Vue](/quick-start/independent-mount/vue/) for the same walkthrough with Vue instead.
 
+Want this without a manifest? See [No Manifest Host](/quick-start/advanced/no-manifest-host/).
+
 ## What you'll build
 
 Two Vite dev servers running side by side: a host app that owns the page and generates its own import map, and a slice app — a completely separate project — that the host mounts at a route without ever bundling it.
@@ -108,7 +110,12 @@ import { manifest } from "./runtime-composition.manifest";
 function SliceSlot() {
   const location = useLocation();
   const { ref, status } = useRuntimeHost<HTMLDivElement>(location.pathname, { manifest });
-  return <div ref={ref} />;
+  return (
+    <>
+      {status.type === "loading" && <p>Loading...</p>}
+      <div ref={ref} />
+    </>
+  );
 }
 
 export default SliceSlot;

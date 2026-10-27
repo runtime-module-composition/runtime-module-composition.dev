@@ -1,9 +1,11 @@
 ---
-title: "Quick Start: Vue"
-description: Stand up a Vue host and one slice locally, composed at runtime through import maps.
+title: "Quick Start: Independent Mount — Vue"
+description: Stand up a Vue host and one slice locally, composed at runtime through import maps, using the mount/unmount convention.
 ---
 
 This guide gets a single Vue host and one Vue slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. See [Quick Start: Independent Mount — React](/quick-start/independent-mount/react/) for the same walkthrough with React instead.
+
+Want this without a manifest? See [No Manifest Host](/quick-start/advanced/no-manifest-host/).
 
 ## What you'll build
 
@@ -84,7 +86,7 @@ Replace the contents of `vite.config.ts` with this.
 
 ## 5. Add the adapter
 
-`createVueAdapter` is a factory: pass it your app's own `Vue` instance and it returns a `useRuntimeHost` composable. Vue has no equivalent to React's plain-component boundary — a Vue slice always mounts through an explicit `mount(target)`/`unmount()` contract, and `useRuntimeHost` drives that lifecycle. It exposes a `target` ref to bind to the element the slice mounts into, plus a `status` ref for loading and error state.
+`createVueAdapter` is a factory: pass it your app's own `Vue` instance and it returns a `useRuntimeHost` composable. Vue has no Direct equivalent — a Vue slice either mounts through `mount`/`unmount` (this guide) or renders in-tree via [Module Boundary — Injected](/quick-start/module-boundary/injected/). `useRuntimeHost` drives the `mount(target)`/`unmount()` lifecycle for this convention. It exposes a `target` ref to bind to the element the slice mounts into, plus a `status` ref for loading and error state.
 
 ```ts
 import * as Vue from "vue";

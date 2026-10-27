@@ -72,7 +72,7 @@ A [manifest](#manifest) field: the specifier prefix every slice is addressed und
 
 ### No Manifest Host
 
-A [host](#host) that loads one known module without a [manifest](#manifest) or route resolution — a hand-rolled [import map](#import-map) entry, or a direct URL import. Already works today for [Module Boundary](#module-boundary) slices (see [Decoupling a Slice from an Existing App](/quick-start/module-boundary/existing-app/)). There's no equivalent for [Independent Mount](#independent-mount) yet — `createRuntimeHost()` requires a full manifest. See the [No Manifest Host reference page](/quick-start/advanced/no-manifest-host/) for exactly what's supported.
+A [host](#host) that loads one known module without a [manifest](#manifest) or route resolution — a hand-rolled [import map](#import-map) entry, or a direct URL import. Supported, but discouraged in favor of a [Manifest Host](#manifest-host) except for a single hand-wired slice. Already works today for [Module Boundary](#module-boundary) slices (see [Decoupling a Slice from an Existing App](/quick-start/module-boundary/existing-app/)). There's no equivalent for [Independent Mount](#independent-mount) — `createRuntimeHost()` requires a full manifest. See the [No Manifest Host reference page](/quick-start/advanced/no-manifest-host/) for exactly what's supported.
 
 ### Route
 

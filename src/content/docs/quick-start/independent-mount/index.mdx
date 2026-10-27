@@ -5,7 +5,7 @@ description: Stand up a host and one slice locally, composed at runtime through 
 
 import { CardGrid, Card } from '@astrojs/starlight/components';
 
-Independent Mount is the pattern where a host mounts a slice into a DOM element via an explicit `mount()`/`unmount()` contract, rather than rendering it as one of the host's own components — the host stays framework-agnostic to whatever the slice is built with.
+Independent Mount is the pattern where a host mounts a slice into a DOM element via an explicit `mount()`/`unmount()` contract, rather than rendering it as one of the host's own components — the host stays framework-agnostic to whatever the slice is built with. That framework-agnosticism doesn't imply CSS isolation, sandboxing, or a separate JavaScript environment, though — it's still the same page, the same `document`, the same global scope.
 
 Pick the framework you want the host built with:
 
@@ -21,3 +21,5 @@ Pick the framework you want the host built with:
 		[Start the Vue quick start →](/quick-start/independent-mount/vue/)
 	</Card>
 </CardGrid>
+
+Want this without a manifest? See [No Manifest Host](/quick-start/advanced/no-manifest-host/).

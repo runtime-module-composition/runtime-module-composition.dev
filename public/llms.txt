@@ -7,9 +7,10 @@ Runtime Module Composition (`rmc-toolkit`) needs almost no configuration: one ma
 ## Docs
 
 - [Overview](/): what Runtime Module Composition is and the architecture model behind it
-- [Quick Start](/quick-start/): pick React or Vue and get a host plus one slice running locally
-- [Quick Start: React](/quick-start/react/): step by step, a React host mounting a React slice
-- [Quick Start: Vue](/quick-start/vue/): step by step, a Vue host mounting a Vue slice
+- [Choose a Pattern](/choose-a-pattern/): answer a few questions to find the pattern that fits your situation
+- [Quick Start](/quick-start/): pick Module Boundary or Independent Mount and get a host plus one slice running locally
+- [Quick Start: Module Boundary](/quick-start/module-boundary/): render a slice as a component inside the host's own framework tree (Direct, Injected, or retrofitted into an existing app)
+- [Quick Start: Independent Mount](/quick-start/independent-mount/): mount a slice into a DOM element via `mount()`/`unmount()`, framework-agnostic to the host
 - [Technical Implementation](/technical-implementation/): the pattern itself, independent of any specific tooling
 - [Architecture Diagrams](/architecture-diagrams/): visual walkthroughs of the manifest, the host, and a slice, built around one worked example
 - [Glossary](/glossary/): definitions for every term used across these docs
