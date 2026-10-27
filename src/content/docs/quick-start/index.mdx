@@ -7,24 +7,19 @@ import { CardGrid, Card } from '@astrojs/starlight/components';
 
 Runtime Module Composition lets a single page be assembled from pieces built with entirely different frontend frameworks, each developed and deployed on its own. A host owns the page and the import map; each slice is an independently built ESM module the host resolves and mounts at runtime — nothing here requires every piece to share a framework, a build pipeline, or a release schedule.
 
-Pick the path that matches where you're starting from:
+Pick the pattern that matches how the slice should relate to the host:
 
 <CardGrid>
-	<Card title={`<img src="/react-logo.svg" alt="" width="28" height="28" style="vertical-align: -0.4em; margin-right: 0.5rem;" /> React`}>
-		A React host mounting a React slice, in 11 steps.
+	<Card title="Module Boundary">
+		Render the slice as a component inside your own framework tree.
 
-		[Start the React quick start →](/quick-start/react/)
+		[Start with Module Boundary →](/quick-start/module-boundary/)
 	</Card>
-	<Card title={`<img src="/vue-logo.svg" alt="" width="28" height="28" style="vertical-align: -0.4em; margin-right: 0.5rem;" /> Vue`}>
-		A Vue host mounting a Vue slice, in 11 steps.
+	<Card title="Independent Mount">
+		Mount the slice into a DOM element with its own rendering lifecycle.
 
-		[Start the Vue quick start →](/quick-start/vue/)
-	</Card>
-	<Card title="Existing App">
-		Already have a bundled React or Vue app? Peel off one piece into an independent slice, without changing anything else about the app first.
-
-		[Decouple a piece →](/quick-start/existing-app/)
+		[Start with Independent Mount →](/quick-start/independent-mount/)
 	</Card>
 </CardGrid>
 
-The React and Vue walkthroughs build the same shape from scratch — a host that generates its own import map and a slice built and served completely independently of it — using each framework's own adapter and conventions. The Existing App path is different: it starts from an app you already have, and shows the narrower convention built for exactly that. For the concepts behind any of these, see [Technical Implementation](/technical-implementation/).
+Module Boundary and Independent Mount are two different answers to the same question: how does the host hand control to a slice? Module Boundary keeps the slice inside the host's own render tree, loaded through its native lazy/Suspense machinery — host and slice must share a framework. Independent Mount hands the slice a DOM element and lets it manage its own lifecycle through a `mount()`/`unmount()` contract, so the host stays framework-agnostic to whatever the slice is built with. Not sure which one fits your situation? See [Choose a Pattern](/choose-a-pattern/). For the concepts behind either, see [Technical Implementation](/technical-implementation/).

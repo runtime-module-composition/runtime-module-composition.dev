@@ -3,6 +3,11 @@ import starlight from "@astrojs/starlight";
 
 export default defineConfig({
   site: "https://runtime-module-composition.dev",
+  redirects: {
+    "/quick-start/react": "/quick-start/module-boundary/direct",
+    "/quick-start/vue": "/quick-start/independent-mount/vue",
+    "/quick-start/existing-app": "/quick-start/module-boundary/existing-app",
+  },
   integrations: [
     starlight({
       title: "Runtime Module Composition",
@@ -67,9 +72,27 @@ export default defineConfig({
           label: "Quick Start",
           items: [
             { label: "Overview", slug: "quick-start" },
-            { label: "React", slug: "quick-start/module-boundary/direct" },
-            { label: "Vue", slug: "quick-start/independent-mount/vue" },
-            { label: "Existing App", slug: "quick-start/module-boundary/existing-app" },
+            {
+              label: "Module Boundary",
+              items: [
+                { label: "Overview", slug: "quick-start/module-boundary" },
+                { label: "Direct (React)", slug: "quick-start/module-boundary/direct" },
+                { label: "Injected", slug: "quick-start/module-boundary/injected" },
+                { label: "Existing App", slug: "quick-start/module-boundary/existing-app" },
+              ],
+            },
+            {
+              label: "Independent Mount",
+              items: [
+                { label: "Overview", slug: "quick-start/independent-mount" },
+                { label: "React", slug: "quick-start/independent-mount/react" },
+                { label: "Vue", slug: "quick-start/independent-mount/vue" },
+              ],
+            },
+            {
+              label: "Advanced",
+              items: [{ label: "No Manifest Host", slug: "quick-start/advanced/no-manifest-host" }],
+            },
           ],
         },
         {
