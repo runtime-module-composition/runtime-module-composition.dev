@@ -57,6 +57,10 @@ export default defineConfig({
       ],
       sidebar: [
         {
+          label: "Start Here",
+          items: [{ label: "Choose a Pattern", slug: "choose-a-pattern" }],
+        },
+        {
           label: "Architecture",
           items: [
             { label: "Overview", slug: "index" },
