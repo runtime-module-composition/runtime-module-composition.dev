@@ -3,7 +3,7 @@ title: "Quick Start: Vue"
 description: Stand up a Vue host and one slice locally, composed at runtime through import maps.
 ---
 
-This guide gets a single Vue host and one Vue slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. See [Quick Start: React](/quick-start/react/) for the same walkthrough with React instead.
+This guide gets a single Vue host and one Vue slice running on your machine as fast as possible. There's no separate production asset host involved — the host itself takes on that responsibility. See [Quick Start: Independent Mount — React](/quick-start/independent-mount/react/) for the same walkthrough with React instead.
 
 ## What you'll build
 
@@ -224,6 +224,6 @@ Visit `http://localhost:5173/search`. The host resolves the route, fetches the s
 
 ## Next steps
 
-- [Quick Start: React](/quick-start/react/) — the same walkthrough with React instead
+- [Quick Start: Independent Mount — React](/quick-start/independent-mount/react/) — the same walkthrough with React instead
 - [API Reference](/api-reference/) — every exported method, with implementation notes
 - [Multi-Framework Demo](/demo/) — a larger, multi-framework reference implementation
