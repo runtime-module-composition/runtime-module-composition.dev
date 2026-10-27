@@ -41,19 +41,38 @@ Marking an import specifier `external: true` in a Vite/Rollup build, so the bund
 
 ### Host
 
-The application that owns the page: the document, routing, and the region a slice mounts into. Generates and serves the [import map](#import-map) — directly, or via a separate static asset host — resolves the current [route](#route), and hands off to an [adapter](#adapter) or `createRuntimeHost()` to mount the matching slice.
+A role, not a specific implementation: any application that loads and renders a [slice](#slice) — the document, the routing, the region a slice occupies. Every host is one of two kinds:
+
+- **[Manifest Host](#manifest-host)** — adopts a manifest and resolves routes across it.
+- **[No Manifest Host](#no-manifest-host)** — loads one known module, no manifest involved.
 
 ### Import map
 
 A browser-native `<script type="importmap">` mechanism that maps bare module specifiers to real URLs. Must be present in the page before any module script executes. `createImportMap()` generates one from a manifest; `@rmc-toolkit/vite`'s plugins inject it into the host's HTML.
 
+### Independent Mount
+
+An integration pattern: the slice mounts into a DOM element and owns its own rendering lifecycle and DOM subtree; the host interacts with it only through [`mount`/`unmount`](#slice-conventions). Framework-agnostic to the host — it never needs to know what rendered the slice. Independent Mount does not imply CSS isolation, sandboxing, or a separate JavaScript environment: it's still the same page, the same `document`, the same global scope.
+
 ### Manifest
 
 The single source of truth: namespace, origins, external dependencies, slice and route overrides. Every other piece — import map generation, route resolution, the Vite build config — reads from the same manifest object.
 
+### Manifest Host
+
+A [host](#host) that adopts a [manifest](#manifest): generates its [import map](#import-map) from it, and resolves the current path to a slice via [`resolveRoute(manifest, path)`](#route). This is what earlier versions of these docs called "Host" — now the specific, manifest-adopting case, not the generic role.
+
+### Module Boundary
+
+An integration pattern: the slice renders as a first-class node inside the host's own framework render tree, loaded through the host's native lazy/Suspense/error-boundary machinery. Host and slice must share a framework. Two export styles — see [Slice conventions](#slice-conventions).
+
 ### Namespace
 
 A [manifest](#manifest) field: the specifier prefix every slice is addressed under, e.g. `@fastflights`. Combined with a slice's name and [entryFile](#entryfile) to form its full [specifier](#specifier).
+
+### No Manifest Host
+
+A [host](#host) that loads one known module without a [manifest](#manifest) or route resolution — a hand-rolled [import map](#import-map) entry, or a direct URL import. Already works today for [Module Boundary](#module-boundary) slices (see [Decoupling a Slice from an Existing App](/quick-start/module-boundary/existing-app/)). There's no equivalent for [Independent Mount](#independent-mount) yet — `createRuntimeHost()` requires a full manifest. See the [No Manifest Host reference page](/quick-start/advanced/no-manifest-host/) for exactly what's supported.
 
 ### Route
 
@@ -77,9 +96,9 @@ None of these is more correct than the others — a slice genuinely is all three
 
 A slice is built for exactly one of three contracts, and they aren't interchangeable:
 
-- **mount/unmount** — the slice exports an object with `mount(target)` and `unmount()`. Used by `createRuntimeHost()`, `createReactAdapter()`, and `createVueAdapter()`.
-- **plain component** — the slice default-exports a component. Used by React's `createDynamicModuleBoundary()`.
-- **injected component** — the slice default-exports a factory, `(deps) => Component`, that receives the host's own framework instance instead of importing its own. Used by `createInjectedModuleBoundary()` (React and Vue). This one is for a specific situation — see [Decoupling a Slice from an Existing App](/quick-start/existing-app/) for when to reach for it instead of the other two.
+- **mount/unmount** — the slice exports an object with `mount(target)` and `unmount()`. The literal interface behind the [Independent Mount](#independent-mount) pattern. Used by `createRuntimeHost()`, `createReactAdapter()`, and `createVueAdapter()`.
+- **Direct** — the slice default-exports a component. One of two [Module Boundary](#module-boundary) export styles. Used by React's `createDynamicModuleBoundary()` — no Vue equivalent exists.
+- **Injected** — the slice default-exports a factory, `(deps) => Component`, that receives the host's own framework instance instead of importing its own. The other [Module Boundary](#module-boundary) export style. Used by `createInjectedModuleBoundary()` (React and Vue). This one is for a specific situation — see [Decoupling a Slice from an Existing App](/quick-start/module-boundary/existing-app/) for when to reach for it instead of Direct or mount/unmount.
 
 Pick the one matching how a given slice is written — not both for the same slice.
 
