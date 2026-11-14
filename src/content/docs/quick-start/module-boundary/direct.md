@@ -116,6 +116,7 @@ function SliceSlot() {
 
   return (
     <DynamicModuleBoundary
+      key={match.specifier} // remount per slice — see the note below
       specifier={match.specifier}
       context={{ route: match, manifest }}
       fallback={<p>Loading...</p>}
@@ -138,6 +139,8 @@ export default App;
 ```
 
 Replace the contents of `src/App.tsx` with this. The host is done — the next steps build the slice it's pointing at.
+
+**Why the `key`:** react-router v7+ wraps every navigation in `React.startTransition`. Through `@rmc-toolkit/react` 0.5.2, `DynamicModuleBoundary`'s internal `Suspense` instance persists across specifier changes, and a transition that suspends against an already-mounted boundary makes React keep the *old* slice on screen while it waits — the suspended render never commits, any interleaving state update restarts the transition, and the URL changes without the new slice ever rendering. `key={match.specifier}` mounts a fresh boundary per slice instead; a boundary newly mounted during a transition shows its fallback immediately, so the navigation commits. Releases after 0.5.2 key the internal `Suspense` by specifier themselves, making the host-side `key` unnecessary (though harmless). This is the same rule hand-rolled loaders already follow — see [Dynamic Module Loading](/technical-implementation/#dynamic-module-loading): key the loaded module by resolved module path.
 
 ## 7. Scaffold the slice
 

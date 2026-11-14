@@ -175,6 +175,7 @@ Real navigation goes through a router rather than reading `window.location` dire
 
 	  return (
 	    <InjectedModuleBoundary
+	      key={match.specifier} // remount per slice — see the note below
 	      specifier={match.specifier}
 	      context={{ route: match, manifest }}
 	      fallback={<p>Loading...</p>}
@@ -197,6 +198,8 @@ Real navigation goes through a router rather than reading `window.location` dire
 	```
 
 	Replace the contents of `src/App.tsx` with this.
+
+	**Why the `key`:** react-router v7+ wraps every navigation in `React.startTransition`, and through `@rmc-toolkit/react` 0.5.2 a transition that suspends against `InjectedModuleBoundary`'s persistent internal `Suspense` keeps the old slice on screen and never commits the new one — the URL changes but the slice doesn't. Keying by specifier mounts a fresh boundary per slice, whose fallback commits immediately. Releases after 0.5.2 key the internal `Suspense` themselves, making the host-side `key` unnecessary (though harmless). See the full explanation in [the Direct guide](/quick-start/module-boundary/direct/#6-mount-a-slice-by-route); the Vue boundary (next tab) is unaffected, since the livelock is React transition behavior.
 	</TabItem>
 	<TabItem label="Vue">
 	```ts

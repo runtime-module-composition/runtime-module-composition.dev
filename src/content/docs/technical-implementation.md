@@ -159,7 +159,7 @@ Important loader behavior:
 - preserve the module specifier so the import map can resolve it;
 - use an error boundary for failed remote modules;
 - show a lightweight loading state during fetch and evaluation;
-- key the loaded module by resolved module path so route changes remount correctly when needed.
+- key the loaded module by resolved module path so route changes remount correctly when needed — the `key` belongs on the `Suspense` boundary itself. This is load-bearing under routers that wrap navigation in `React.startTransition` (react-router v7+ does for every navigation): a persistent `Suspense` that suspends inside a transition keeps the old module on screen and never commits the new one. See the [`createDynamicModuleBoundary` notes](/api-reference/#createdynamicmoduleboundaryreact) for the packaged boundaries' version of this rule.
 
 Example:
 
@@ -172,7 +172,7 @@ const DynamicModuleLoader = ({ modulePath }) => {
   });
 
   return (
-    <React.Suspense fallback={<LoadingState />}>
+    <React.Suspense key={modulePath} fallback={<LoadingState />}>
       <ErrorBoundary fallback={<NotFound modulePath={modulePath} />}>
         <DynamicModule />
       </ErrorBoundary>
