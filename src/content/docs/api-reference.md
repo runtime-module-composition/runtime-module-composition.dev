@@ -607,6 +607,7 @@ export function RouteSlot() {
 
   return (
     <DynamicModuleBoundary
+      key={match.specifier} // remount per slice — see the transition note below
       specifier={match.specifier}
       context={{ route: match, manifest }}
       fallback={<div>Loading...</div>}
@@ -623,6 +624,7 @@ Notes:
 - The slice module must default-export a React component.
 - Built on `React.lazy()` and `React.Suspense`, using `importModule()` internally.
 - An internal error boundary catches both import failures and render failures.
+- **Transition-wrapped navigations (react-router v7+):** react-router wraps every navigation in `React.startTransition`. Through 0.5.2, the boundary's internal `Suspense` instance persists across specifier changes, and a transition that suspends against an already-mounted boundary makes React keep the old slice rendered while the suspended render never commits — the URL changes but the new slice never appears. Until a release after 0.5.2 (which keys the internal `Suspense` by specifier itself), add `key={match.specifier}` to the boundary element as above; on fixed releases the host-side `key` is unnecessary but harmless. This is the same remount rule hand-rolled loaders follow — see [Dynamic Module Loading](/technical-implementation/#dynamic-module-loading): key the loaded module by resolved module path.
 
 ### `createInjectedModuleBoundary(React, extraDeps?)`
 
@@ -658,6 +660,8 @@ export default (deps) => {
 ```
 
 `extraDeps` is merged into `{ React, ...extraDeps }` once, when `createInjectedModuleBoundary` itself is called — not per render, and not a prop on `InjectedModuleBoundary`. Every slice rendered through the resulting boundary receives that same fixed object.
+
+`InjectedModuleBoundary` shares `DynamicModuleBoundary`'s internal `Suspense` structure, so the transition-wrapped-navigation note above applies to it identically: through 0.5.2, add `key={match.specifier}` when the specifier changes with navigation.
 
 ## Vue adapter (`@rmc-toolkit/vue`)
 
